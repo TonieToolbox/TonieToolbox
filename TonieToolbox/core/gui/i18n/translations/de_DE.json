@@ -1,0 +1,231 @@
+{
+  "app": {
+    "title": "TonieToolbox",
+    "version": "Version {version}",
+    "description": "Konvertiere Audiodateien in Toniebox-kompatibles Format (.TAF) und interagiere mit TeddyCloud"
+  },
+  "menu": {
+    "file": "&Datei",
+    "file_open": "&TAF-Datei(en) öffnen...",
+    "playlist_save": "Wiedergabeliste &speichern...",
+    "playlist_load": "Wiedergabeliste &laden...",
+    "file_exit": "&Beenden",
+    "tools": "&Werkzeuge",
+    "tools_convert": "&Konvertieren",
+    "tools_convert_opus": "TAF zu &Opus-Dateien...",
+    "tools_convert_mp3": "TAF zu &MP3-Dateien...",
+    "tools_convert_single_mp3": "TAF zu &Einzelne MP3...",
+    "tools_analyze": "&TAF-Datei analysieren...",
+    "tools_plugin_manager": "&Plugin-Verwaltung...",
+    "view": "&Ansicht",
+    "view_themes": "&Themen",
+    "view_language": "&Sprache", 
+    "help": "&Hilfe",
+    "help_about": "&Über TonieToolbox"
+  },
+  "tabs": {
+    "player": "Player"
+  },
+  "player": {
+    "controls": {
+      "play": "Abspielen",
+      "pause": "Pausieren",
+      "stop": "Stoppen",
+      "previous_chapter": "Vorheriges Kapitel",
+      "next_chapter": "Nächstes Kapitel",
+      "previous_track": "Vorheriger Titel",
+      "next_track": "Nächster Titel",
+      "mute": "Stumm schalten",
+      "unmute": "Ton einschalten",
+      "volume_label": "{volume}%"
+    },
+    "status": {
+      "stopped": "Gestoppt",
+      "playing": "Läuft",
+      "paused": "Pausiert",
+      "loading": "Laden...",
+      "error": "Fehler",
+      "playback_error": "Wiedergabefehler",
+      "processing_complete": "Verarbeitung abgeschlossen"
+    },
+    "info": {
+      "file_info": "Datei-Informationen",
+      "no_file": "Keine Datei geladen",
+      "no_track_loaded": "Kein Titel geladen",
+      "duration": "Dauer: {duration}",
+      "chapters": "Kapitel: {count}",
+      "file_size": "Dateigröße: {size}",
+      "sample_rate": "Samplerate: {rate} Hz",
+      "channels": "Kanäle: {channels}",
+      "bitrate": "Bitrate: {bitrate} kbps"
+    },
+    "progress": {
+      "position": "Position: {current} / {total}",
+      "chapter": "Kapitel {current} von {total}",
+      "time_format": "{minutes}:{seconds:02d}"
+    }
+  },
+  "playlist": {
+    "title": "Titelliste",
+    "playlist_label": "Wiedergabeliste",
+    "status": {
+      "no_playlist": "Keine Wiedergabeliste geladen",
+      "no_tracks": "Keine Titel in der Wiedergabeliste",
+      "single_file_mode": "Einzeldatei-Modus",
+      "playlist_mode": "Wiedergabelisten-Modus"
+    },
+    "info": {
+      "playlist_status": "Wiedergabelisten-Status",
+      "selected_track": "Ausgewählter Titel",
+      "no_playlist_loaded": "Keine Wiedergabeliste geladen",
+      "no_track_loaded": "Kein Titel geladen",
+      "double_click_to_edit": "Klicken Sie, um den Namen der Wiedergabeliste zu bearbeiten",
+      "directory": "Verzeichnis: {name}",
+      "playlist": "Wiedergabeliste: {name}",
+      "single_file": "Einzelne Datei",
+      "single_track": "Einzelner Titel",
+      "no_tracks": "Keine Titel",
+      "tracks_playing": "Titel: {total} | Läuft: {current}",
+      "duration_label": "Dauer: {duration}",
+      "size_label": "Größe: {size} MB",
+      "format_label": "Format: {channels}ch, {rate} Hz",
+      "bitrate_label": "Bitrate: {bitrate} kbps",
+      "chapters_label": "Kapitel: {count}",
+      "auto_advance_enabled": "Automatisch weiter: Aktiviert",
+      "auto_advance_disabled": "Automatisch weiter: Deaktiviert",
+      "shuffle_enabled": "Zufällig: Aktiviert",
+      "repeat_one": "Einer wiederholen",
+      "repeat_all": "Alle wiederholen",
+      "repeat_label": "Wiederholen: {mode}"
+    },
+    "controls": {
+      "playlist_options": "Wiedergabelisten-Optionen",
+      "auto_advance": "Automatisch weiter",
+      "auto_advance_tooltip": "Nächsten Titel automatisch abspielen, wenn der aktuelle Titel endet",
+      "shuffle": "Zufällig",
+      "shuffle_tooltip": "Titel in zufälliger Reihenfolge abspielen",
+      "repeat": "Wiederholen:",
+      "repeat_tooltip": "Wiederholungsmodus: Keine, Ein Titel oder Alle Titel",
+      "repeat_none": "Keine",
+      "repeat_one": "Einer",
+      "repeat_all": "Alle",
+      "track_status": "Titel {current} von {total}"
+    },
+    "buttons": {
+      "add_files": "Dateien hinzufügen",
+      "add_files_tooltip": "Dateien oder Ordner zur Wiedergabeliste hinzufügen",
+      "remove": "Entfernen",
+      "remove_tooltip": "Ausgewählte Titel aus der Wiedergabeliste entfernen",
+      "remove_selected": "{count} ausgewählten Titel entfernen",
+      "remove_selected_plural": "{count} ausgewählte Titel entfernen",
+      "clear": "Leeren",
+      "clear_tooltip": "Gesamte Wiedergabeliste leeren"
+    },
+    "context_menu": {
+      "play_track": "Titel abspielen",
+      "remove_from_playlist": "Aus Wiedergabeliste entfernen"
+    }
+  },
+  "chapters": {
+    "title": "Kapitel",
+    "single_chapter": "Kapitel (1 Kapitel)"
+  },
+  "about": {
+    "title": "Über TonieToolbox",
+    "description": "Ein Werkzeug zum Konvertieren von Audiodateien in Toniebox-kompatibles Format und zur Interaktion mit TeddyCloud.",
+    "version": "Version: {version}",
+    "author": "Autor: Quentendo64",
+    "license": "Lizenz: GPL-3.0",
+    "website": "Webseite: https://github.com/TonieToolbox/TonieToolbox",
+    "close": "Schließen"
+  },
+  "dialogs": {
+    "open_file": {
+      "title": "TAF-Dateien oder Ordner öffnen",
+      "filter": "TAF-Dateien (*.taf);;Alle Dateien (*)",
+      "select_folder": "Stattdessen Ordner wählen"
+    },
+    "add_to_playlist": {
+      "title": "Dateien oder Ordner zur Wiedergabeliste hinzufügen"
+    },
+    "save_playlist": {
+      "title": "Wiedergabeliste speichern"
+    },
+    "load_playlist": {
+      "title": "Wiedergabeliste laden"
+    },
+    "error": {
+      "no_playlist": "Keine Wiedergabeliste",
+      "no_playlist_to_save": "Es gibt keine Wiedergabeliste zum Speichern.",
+      "playlist_save_failed": "Speichern fehlgeschlagen",
+      "playlist_save_failed_msg": "Wiedergabeliste konnte nicht gespeichert werden.",
+      "playlist_load_failed": "Laden fehlgeschlagen",
+      "playlist_load_failed_msg": "Wiedergabeliste konnte nicht geladen werden.",
+      "playlist_no_taf_files": "Keine gültigen TAF-Dateien in der Wiedergabeliste gefunden. {count} Nicht-TAF-Datei(en) wurden übersprungen. Nur .taf-Dateien werden unterstützt.",
+      "playlist_no_accessible_files": "Keine zugänglichen Dateien in der Wiedergabeliste. {count} Datei(en) nicht gefunden.",
+      "playlist_empty": "Wiedergabeliste ist leer oder enthält nur Kommentare.",
+      "playlist_no_items": "Keine Einträge aus Wiedergabeliste geladen.",
+      "title": "Fehler",
+      "load_failed": "Datei konnte nicht geladen werden: {error}",
+      "play_failed": "Datei konnte nicht abgespielt werden: {error}",
+      "conversion_error": "Konvertierungsfehler",
+      "conversion_failed": "Datei konnte nicht konvertiert werden: {error}",
+      "conversion_failed_generic": "Konvertierung fehlgeschlagen: {error}",
+      "analysis_error": "Analysefehler",
+      "analysis_failed": "Datei konnte nicht analysiert werden: {error}",
+      "analysis_failed_generic": "Analyse fehlgeschlagen: {error}"
+    },
+    "info": {
+      "title": "Information",
+      "conversion_complete": "Konvertierung abgeschlossen",
+      "conversion_success_dir": "Erfolgreich konvertiert nach {output_dir}",
+      "conversion_success_file": "Erfolgreich konvertiert nach {output_file}"
+    }
+  },
+  "status": {
+    "ready": "Bereit",
+    "loading_file": "Datei wird geladen...",
+    "file_loaded": "Datei geladen: {filename}",
+    "playing": "Wird abgespielt",
+    "paused": "Pausiert",
+    "stopped": "Gestoppt",
+    "loading": "Lädt...",
+    "buffering": "Puffert...",
+    "error": "Fehler"
+  },
+  "themes": {
+    "default": "Standard Dunkel",
+    "applying": "Thema wird angewendet: {theme}",
+    "applied": "Thema angewendet: {theme}"
+  },
+  "languages": {
+    "en_US": "English",
+    "de_DE": "Deutsch"
+  },
+  "taf_analysis": {
+    "title": "TAF-Datei Analyse",
+    "file_info": "Datei-Informationen",
+    "header_info": "Header-Informationen",
+    "audio_info": "Audio-Informationen",
+    "opus_comments": "Opus-Kommentare",
+    "chapters": "Kapitel",
+    "file_name": "Dateiname:",
+    "file_size": "Dateigröße:",
+    "header_size": "Header-Größe:",
+    "audio_size": "Audio-Größe:",
+    "sha1": "SHA1-Hash:",
+    "opus_version": "Opus-Version:",
+    "channels": "Kanäle:",
+    "sample_rate": "Samplerate:",
+    "serial_number": "Bitstream-Seriennummer:",
+    "chapter_count": "Anzahl Kapitel:",
+    "close": "Schließen",
+    "bytes": "{size} Bytes",
+    "mb": "{size:.2f} MB",
+    "hz": "{rate} Hz",
+    "mono": "Mono",
+    "stereo": "Stereo",
+    "invalid_file": "Ungültige TAF-Datei",
+    "error_message": "Die Datei konnte nicht analysiert werden. Es ist keine gültige TAF-Datei."
+  }
+}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block site_meta %}
+  {{ super() }}
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="{{ 'assets/favicon/favicon.ico' | url }}">
+  <link rel="icon" type="image/svg+xml" href="{{ 'assets/favicon/favicon.svg' | url }}">
+  <link rel="icon" type="image/png" sizes="96x96" href="{{ 'assets/favicon/favicon-96x96.png' | url }}">
+  
+  <!-- Apple Touch Icon -->
+  <link rel="apple-touch-icon" href="{{ 'assets/favicon/apple-touch-icon.png' | url }}">
+  
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="{{ 'assets/favicon/site.webmanifest' | url }}">
+  
+  <!-- PWA Icons -->
+  <meta name="theme-color" content="#fd6050">
+{% endblock %}

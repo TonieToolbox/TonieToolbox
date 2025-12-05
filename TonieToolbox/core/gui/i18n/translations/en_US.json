@@ -1,0 +1,231 @@
+{
+  "app": {
+    "title": "TonieToolbox",
+    "version": "Version {version}",
+    "description": "Convert audio files to Toniebox compatible format (.TAF) and interact with TeddyCloud"
+  },
+  "menu": {
+    "file": "&File",
+    "file_open": "&Open TAF File(s)...",
+    "playlist_save": "&Save Playlist...",
+    "playlist_load": "&Load Playlist...",
+    "file_exit": "E&xit",
+    "tools": "&Tools",
+    "tools_convert": "&Convert",
+    "tools_convert_opus": "TAF to &Opus Files...",
+    "tools_convert_mp3": "TAF to &MP3 Files...",
+    "tools_convert_single_mp3": "TAF to &Single MP3...",
+    "tools_analyze": "&Analyze TAF File...",
+    "tools_plugin_manager": "&Plugin Manager...",
+    "view": "&View", 
+    "view_themes": "&Themes",
+    "view_language": "&Language",
+    "help": "&Help",
+    "help_about": "&About TonieToolbox"
+  },
+  "tabs": {
+    "player": "Player"
+  },
+  "player": {
+    "controls": {
+      "play": "Play",
+      "pause": "Pause", 
+      "stop": "Stop",
+      "previous_chapter": "Previous Chapter",
+      "next_chapter": "Next Chapter",
+      "previous_track": "Previous Track",
+      "next_track": "Next Track",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "volume_label": "{volume}%"
+    },
+    "status": {
+      "stopped": "Stopped",
+      "playing": "Playing",
+      "paused": "Paused",
+      "loading": "Loading...",
+      "error": "Error",
+      "playback_error": "Playback error",
+      "processing_complete": "Processing complete"
+    },
+    "info": {
+      "file_info": "File Information",
+      "no_file": "No file loaded",
+      "no_track_loaded": "No track loaded",
+      "duration": "Duration: {duration}",
+      "chapters": "Chapters: {count}",
+      "file_size": "File Size: {size}",
+      "sample_rate": "Sample Rate: {rate} Hz",
+      "channels": "Channels: {channels}",
+      "bitrate": "Bitrate: {bitrate} kbps"
+    },
+    "progress": {
+      "position": "Position: {current} / {total}",
+      "chapter": "Chapter {current} of {total}",
+      "time_format": "{minutes}:{seconds:02d}"
+    }
+  },
+  "playlist": {
+    "title": "Track List",
+    "playlist_label": "Playlist",
+    "status": {
+      "no_playlist": "No playlist loaded",
+      "no_tracks": "No tracks in playlist",
+      "single_file_mode": "Single file mode",
+      "playlist_mode": "Playlist mode"
+    },
+    "info": {
+      "playlist_status": "Playlist Status",
+      "selected_track": "Selected Track",
+      "no_playlist_loaded": "No playlist loaded",
+      "no_track_loaded": "No track loaded",
+      "double_click_to_edit": "Click to edit playlist name",
+      "directory": "Directory: {name}",
+      "playlist": "Playlist: {name}",
+      "single_file": "Single File",
+      "single_track": "Single track",
+      "no_tracks": "No tracks",
+      "tracks_playing": "Tracks: {total} | Playing: {current}",
+      "duration_label": "Duration: {duration}",
+      "size_label": "Size: {size} MB",
+      "format_label": "Format: {channels}ch, {rate} Hz",
+      "bitrate_label": "Bitrate: {bitrate} kbps",
+      "chapters_label": "Chapters: {count}",
+      "auto_advance_enabled": "Auto-advance: Enabled",
+      "auto_advance_disabled": "Auto-advance: Disabled",
+      "shuffle_enabled": "Shuffle: Enabled",
+      "repeat_one": "Repeat One",
+      "repeat_all": "Repeat All",
+      "repeat_label": "Repeat: {mode}"
+    },
+    "controls": {
+      "playlist_options": "Playlist Options",
+      "auto_advance": "Auto Advance",
+      "auto_advance_tooltip": "Automatically play next track when current track ends",
+      "shuffle": "Shuffle",
+      "shuffle_tooltip": "Play tracks in random order",
+      "repeat": "Repeat:",
+      "repeat_tooltip": "Repeat mode: None, One track, or All tracks",
+      "repeat_none": "None",
+      "repeat_one": "One",
+      "repeat_all": "All",
+      "track_status": "Track {current} of {total}"
+    },
+    "buttons": {
+      "add_files": "Add Files",
+      "add_files_tooltip": "Add files or folders to playlist",
+      "remove": "Remove",
+      "remove_tooltip": "Remove selected tracks from playlist",
+      "remove_selected": "Remove {count} selected track",
+      "remove_selected_plural": "Remove {count} selected tracks",
+      "clear": "Clear",
+      "clear_tooltip": "Clear entire playlist"
+    },
+    "context_menu": {
+      "play_track": "Play Track",
+      "remove_from_playlist": "Remove from Playlist"
+    }
+  },
+  "chapters": {
+    "title": "Chapters",
+    "single_chapter": "Chapters (1 chapter)"
+  },
+  "about": {
+    "title": "About TonieToolbox",
+    "description": "A tool for converting audio files to Toniebox compatible format and interacting with TeddyCloud.",
+    "version": "Version: {version}",
+    "author": "Author: Quentendo64",
+    "license": "License: GPL-3.0",
+    "website": "Website: https://github.com/TonieToolbox/TonieToolbox",
+    "close": "Close"
+  },
+  "dialogs": {
+    "open_file": {
+      "title": "Open TAF Files or Folder",
+      "filter": "TAF Files (*.taf);;All Files (*)",
+      "select_folder": "Select Folder Instead"
+    },
+    "add_to_playlist": {
+      "title": "Add Files or Folder to Playlist"
+    },
+    "save_playlist": {
+      "title": "Save Playlist"
+    },
+    "load_playlist": {
+      "title": "Load Playlist"
+    },
+    "error": {
+      "no_playlist": "No Playlist",
+      "no_playlist_to_save": "There is no playlist to save.",
+      "playlist_save_failed": "Save Failed",
+      "playlist_save_failed_msg": "Failed to save playlist.",
+      "playlist_load_failed": "Load Failed",
+      "playlist_load_failed_msg": "Failed to load playlist.",
+      "playlist_no_taf_files": "No valid TAF files found in playlist. {count} non-TAF file(s) were skipped. Only .taf files are supported.",
+      "playlist_no_accessible_files": "No accessible files in playlist. {count} file(s) not found.",
+      "playlist_empty": "Playlist file is empty or contains only comments.",
+      "playlist_no_items": "No items loaded from playlist.",
+      "title": "Error",
+      "load_failed": "Failed to load file: {error}",
+      "play_failed": "Failed to play file: {error}",
+      "conversion_error": "Conversion Error",
+      "conversion_failed": "Failed to convert file: {error}",
+      "conversion_failed_generic": "Conversion failed: {error}",
+      "analysis_error": "Analysis Error",
+      "analysis_failed": "Failed to analyze file: {error}",
+      "analysis_failed_generic": "Analysis failed: {error}"
+    },
+    "info": {
+      "title": "Information",
+      "conversion_complete": "Conversion Complete",
+      "conversion_success_dir": "Successfully converted to {output_dir}",
+      "conversion_success_file": "Successfully converted to {output_file}"
+    }
+  },
+  "status": {
+    "ready": "Ready",
+    "loading_file": "Loading file...",
+    "file_loaded": "File loaded: {filename}",
+    "playing": "Playing",
+    "paused": "Paused",
+    "stopped": "Stopped",
+    "loading": "Loading...",
+    "buffering": "Buffering...",
+    "error": "Error"
+  },
+  "themes": {
+    "default": "Default Dark",
+    "applying": "Applying theme: {theme}",
+    "applied": "Theme applied: {theme}"
+  },
+  "languages": {
+    "en_US": "English",
+    "de_DE": "Deutsch"
+  },
+  "taf_analysis": {
+    "title": "TAF File Analysis",
+    "file_info": "File Information",
+    "header_info": "Header Information",
+    "audio_info": "Audio Information",
+    "opus_comments": "Opus Comments",
+    "chapters": "Chapters",
+    "file_name": "File Name:",
+    "file_size": "File Size:",
+    "header_size": "Header Size:",
+    "audio_size": "Audio Size:",
+    "sha1": "SHA1 Hash:",
+    "opus_version": "Opus Version:",
+    "channels": "Channels:",
+    "sample_rate": "Sample Rate:",
+    "serial_number": "Bitstream Serial:",
+    "chapter_count": "Chapter Count:",
+    "close": "Close",
+    "bytes": "{size} bytes",
+    "mb": "{size:.2f} MB",
+    "hz": "{rate} Hz",
+    "mono": "Mono",
+    "stereo": "Stereo",
+    "invalid_file": "Invalid TAF File",
+    "error_message": "The file could not be analyzed. It may not be a valid TAF file."
+  }
+}

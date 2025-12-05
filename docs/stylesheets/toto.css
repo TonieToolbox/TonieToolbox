@@ -1,0 +1,172 @@
+/* 
+TonieToolbox Brand Colors CSS
+Using official logo colors for consistent branding across GUI and documentation
+*/
+
+:root {
+  /* Brand colors from TonieToolbox logo */
+  --md-primary-fg-color:        #fd6050; /* Coral Red - primary brand color */
+  --md-primary-fg-color--light: #fe7a6c; /* Lighter coral */
+  --md-primary-fg-color--dark:  #e5554a; /* Darker coral */
+  
+  --md-accent-fg-color:         #fdcb50; /* Golden Yellow - accent color */
+  --md-accent-fg-color--transparent: #fdcb5010; /* Transparent golden yellow */
+  
+  /* Brand secondary colors for various UI elements */
+  --brand-blue:      #27a2cc;
+  --brand-magenta:   #bc3c85;
+  --brand-purple:    #6864f7;
+  --brand-dark-blue: #052a75;
+  
+  /* Light theme overrides */
+  --md-text-color:              #2c3e50;
+  --md-text-color--light:       #7b8394;
+}
+
+/* Dark theme color overrides */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        #fd6050; /* Coral Red */
+  --md-primary-fg-color--light: #fe7a6c; 
+  --md-primary-fg-color--dark:  #e5554a;
+  
+  --md-accent-fg-color:         #fdcb50; /* Golden Yellow */
+  --md-accent-fg-color--transparent: #fdcb5020;
+  
+  /* Dark theme backgrounds using brand dark blue */
+  --md-default-bg-color:        #0a1929;
+  --md-default-bg-color--light: #052a75; /* Brand dark blue */
+  --md-default-bg-color--lighter: #0d3a8c;
+  --md-default-bg-color--lightest: #1e4ba3;
+  
+  /* Code blocks */
+  --md-code-bg-color:           #052a75;
+  --md-code-fg-color:           #ffffff;
+}
+
+/* Custom button styles using brand colors */
+.md-button {
+  background-color: var(--md-primary-fg-color) !important;
+  border-color: var(--md-primary-fg-color) !important;
+}
+
+.md-button:hover {
+  background-color: var(--md-primary-fg-color--light) !important;
+  border-color: var(--md-primary-fg-color--light) !important;
+}
+
+.md-button--primary {
+  background-color: var(--md-primary-fg-color) !important;
+  border-color: var(--md-primary-fg-color) !important;
+  color: white !important;
+}
+
+/* Secondary buttons using golden yellow */
+.md-button--secondary {
+  background-color: var(--md-accent-fg-color) !important;
+  border-color: var(--md-accent-fg-color) !important;
+  color: var(--brand-dark-blue) !important;
+}
+
+/* Info buttons using brand blue */
+.md-button--info {
+  background-color: var(--brand-blue) !important;
+  border-color: var(--brand-blue) !important;
+  color: white !important;
+}
+
+/* Navigation and header customizations */
+.md-header {
+  background-color: var(--md-primary-fg-color) !important;
+}
+
+.md-tabs {
+  background-color: var(--md-primary-fg-color--dark) !important;
+}
+
+.md-tabs__item {
+  color: white !important;
+}
+
+.md-tabs__link--active {
+  color: var(--md-accent-fg-color) !important;
+}
+
+/* Footer with brand colors */
+.md-footer {
+  background-color: var(--brand-dark-blue) !important;
+}
+
+.md-footer-meta {
+  background-color: #031f5a !important;
+}
+
+/* Admonitions with brand colors */
+.md-typeset .admonition.note,
+.md-typeset details.note {
+  border-color: var(--brand-blue);
+}
+
+.md-typeset .note > .admonition-title,
+.md-typeset .note > summary {
+  background-color: var(--brand-blue)1a;
+  border-color: var(--brand-blue);
+}
+
+.md-typeset .note > .admonition-title::before,
+.md-typeset .note > summary::before {
+  background-color: var(--brand-blue);
+}
+
+.md-typeset .admonition.warning,
+.md-typeset details.warning {
+  border-color: var(--md-accent-fg-color);
+}
+
+.md-typeset .warning > .admonition-title,
+.md-typeset .warning > summary {
+  background-color: var(--md-accent-fg-color)1a;
+  border-color: var(--md-accent-fg-color);
+}
+
+.md-typeset .warning > .admonition-title::before,
+.md-typeset .warning > summary::before {
+  background-color: var(--md-accent-fg-color);
+}
+
+.md-typeset .admonition.danger,
+.md-typeset details.danger {
+  border-color: var(--md-primary-fg-color);
+}
+
+.md-typeset .danger > .admonition-title,
+.md-typeset .danger > summary {
+  background-color: var(--md-primary-fg-color)1a;
+  border-color: var(--md-primary-fg-color);
+}
+
+.md-typeset .danger > .admonition-title::before,
+.md-typeset .danger > summary::before {
+  background-color: var(--md-primary-fg-color);
+}
+
+/* Progress bars and loading indicators */
+.md-progress__bar {
+  background-color: var(--md-accent-fg-color) !important;
+}
+
+/* Search highlighting */
+.md-search-result__teaser mark {
+  background-color: var(--md-accent-fg-color);
+  color: var(--brand-dark-blue);
+}
+
+/* Code syntax highlighting adjustments for brand theme */
+[data-md-color-scheme="slate"] {
+  --md-code-hl-keyword-color:        var(--brand-purple);
+  --md-code-hl-function-color:       var(--md-accent-fg-color);
+  --md-code-hl-constant-color:       var(--brand-blue);
+  --md-code-hl-string-color:         #98d982;
+  --md-code-hl-number-color:         var(--brand-magenta);
+  --md-code-hl-special-color:        var(--md-primary-fg-color);
+  --md-code-hl-comment-color:        #75715e;
+}

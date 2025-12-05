@@ -1,0 +1,6 @@
+[submodule "TonieToolbox/core/plugins/builtin/plugin_manager"]
+	path = TonieToolbox/core/plugins/builtin/plugin_manager
+	url = git@github.com:TonieToolbox/builtin_plugin_plugin_manager.git
+[submodule "TonieToolbox/core/plugins/builtin/mini_player"]
+	path = TonieToolbox/core/plugins/builtin/mini_player
+	url = git@github.com:TonieToolbox/builtin_plugin_mini_player.git

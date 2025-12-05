@@ -1,0 +1,158 @@
+name: Build and Publish Docker Image
+
+on:
+  release:
+    types: [created]
+  push:
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  REGISTRY_DOCKERHUB: docker.io
+  REGISTRY_GITHUB: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  DOCKERHUB_IMAGE_NAME: quentendo64/tonietoolbox
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract version
+        id: extract_version
+        run: |
+          VERSION=$(grep -oP "__version__\s*=\s*'\K[^']+" TonieToolbox/__init__.py || grep -oP '__version__\s*=\s*"\K[^"]+' TonieToolbox/__init__.py)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Check if prerelease version
+        id: check_prerelease
+        run: |
+          VERSION="${{ steps.extract_version.outputs.VERSION }}"
+          # Determine if this is a pre-release version according to PEP 440
+          if [[ "$VERSION" == *"a"* || "$VERSION" == *"b"* || "$VERSION" == *"rc"* ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+            echo "This is a prerelease version: $VERSION"
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+            echo "This is a stable version: $VERSION"
+          fi
+
+      - name: Check Docker Hub credentials
+        id: check_dockerhub_creds
+        if: github.event_name != 'pull_request'
+        run: |
+          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "::warning::Docker Hub credentials are not configured. Skipping Docker Hub push."
+            echo "push_to_dockerhub=false" >> $GITHUB_OUTPUT
+          else
+            echo "push_to_dockerhub=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request' && steps.check_dockerhub_creds.outputs.push_to_dockerhub == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_DOCKERHUB }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          logout: true
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_GITHUB }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          logout: true
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ steps.check_dockerhub_creds.outputs.push_to_dockerhub == 'true' && format('{0}/{1}', env.REGISTRY_DOCKERHUB, env.DOCKERHUB_IMAGE_NAME) || '' }}
+            ${{ env.REGISTRY_GITHUB }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+            # Only tag 'latest' for stable releases
+            latest=${{ steps.check_prerelease.outputs.prerelease == 'false' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+          tags: |
+            # Latest tag only for stable releases on main branch
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.check_prerelease.outputs.prerelease == 'false' }}
+            # Version tag (always)
+            type=raw,value=${{ steps.extract_version.outputs.VERSION }},enable=true
+            # Semver tags only for stable releases
+            type=semver,pattern={{version}},value=${{ steps.extract_version.outputs.VERSION }},enable=${{ steps.check_prerelease.outputs.prerelease == 'false' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.extract_version.outputs.VERSION }},enable=${{ steps.check_prerelease.outputs.prerelease == 'false' }}
+            type=semver,pattern={{major}},value=${{ steps.extract_version.outputs.VERSION }},enable=${{ steps.check_prerelease.outputs.prerelease == 'false' }}
+            # Git SHA
+            type=sha,format=long
+            # Pre-release tags
+            type=raw,value=alpha,enable=${{ contains(steps.extract_version.outputs.VERSION, 'a') }}
+            type=raw,value=beta,enable=${{ contains(steps.extract_version.outputs.VERSION, 'b') }}
+            type=raw,value=rc,enable=${{ contains(steps.extract_version.outputs.VERSION, 'rc') }}
+
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: mode=max
+          sbom: true
+          build-args: |
+            VERSION=${{ steps.extract_version.outputs.VERSION }}
+            BUILDKIT_CONTEXT_KEEP_GIT_DIR=1
+
+      - name: Generate artifact attestation
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY_GITHUB }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build-and-push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Create release summary
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "## Docker Image Published 🐳" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.extract_version.outputs.VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Prerelease:** ${{ steps.check_prerelease.outputs.prerelease }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Images Published:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" | sed 's/,/\n/g' >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull commands:" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check_dockerhub_creds.outputs.push_to_dockerhub }}" == "true" ]; then
+            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "docker pull ${{ env.DOCKERHUB_IMAGE_NAME }}:${{ steps.extract_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY_GITHUB }}/${{ env.IMAGE_NAME }}:${{ steps.extract_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,4 @@
+include LICENSE.md README.md CHANGELOG.md CONTRIBUTING.md
+recursive-include TonieToolbox/core *.qss *.json *.proto
+recursive-include TonieToolbox/core/gui/themes *
+recursive-include TonieToolbox/core/i18n *.json

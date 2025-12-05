@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=80.9.0"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "TonieToolbox"
+dynamic = ["version"]
+description = "Convert audio files to Toniebox compatible format (.TAF) and interact with TeddyCloud."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "GPL-3.0-or-later"
+authors = [
+    {name = "Quentendo64", email = "quentin@wohlfeil.at"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Sound/Audio :: Conversion",
+]
+dependencies = [
+    "protobuf<=6.33.0",
+    "requests>=2.32.5",
+    "mutagen>=1.47.0",
+    "packaging>=25.0",
+    "PyQt6>=6.10.0",
+    "tqdm>=4.67.1",
+    "aiofiles>=25.1.0",
+    "aiohttp>=3.13.2"
+]
+[project.optional-dependencies]
+test = [
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "pytest-qt>=4.5.0",
+    "pytest-mock>=3.15.1",
+    "pytest-xdist>=3.8.0",
+    "pytest-timeout>=2.4.0"
+]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.23",
+    "mkdocs-git-revision-date-localized-plugin>=1.5.0",
+    "mkdocs-static-i18n>=1.3.0",
+    "pymdown-extensions>=10.16.1",
+    "mkdocs-minify-plugin>=0.8.0",
+    "mkdocs-redirects>=1.2.2"
+]
+[project.urls]
+Homepage = "https://github.com/TonieToolbox/TonieToolbox"
+"Bug Tracker" = "https://github.com/TonieToolbox/TonieToolbox/issues"
+[project.scripts]
+tonietoolbox = "TonieToolbox.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["TonieToolbox*"]
+exclude = ["output*", "tests*", "docs*", "scripts*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "TonieToolbox.__version__"}

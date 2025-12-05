@@ -1,0 +1,111 @@
+site_name: TonieToolbox Documentation
+site_description: Complete guide for TonieToolbox - Audio conversion toolkit for Tonie Audio Format (TAF).
+site_author: Quentendo64
+site_url: https://tonietoolbox.github.io/TonieToolbox/
+
+repo_name: TonieToolbox/TonieToolbox
+repo_url: https://github.com/TonieToolbox/TonieToolbox
+
+theme:
+  name: material
+  favicon: assets/favicon/favicon.ico
+  custom_dir: docs/overrides
+  palette:
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - search.highlight
+    - search.share
+    - toc.follow
+    - content.code.copy
+
+plugins:
+  - search:
+      lang:
+        - en
+  - i18n:
+      docs_structure: folder
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+  - git-revision-date-localized:
+      enable_creation_date: true
+      fallback_to_build_date: true
+
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - GUI Guide: getting-started/gui-guide.md
+    - First Conversion: getting-started/first-conversion.md
+  - Usage Guide:
+    - Basic Usage: usage/basic-usage.md
+    - Media Tags: usage/media-tags.md
+    - TeddyCloud Integration: usage/teddycloud.md
+    - Desktop Integration: usage/desktop-integration.md
+    - Docker Usage: docker.md
+  - Plugins:
+    - Overview: plugins/README.md
+    - Configuration: plugins/CONFIGURATION.md
+    - Trust Levels: plugins/trust-levels.md
+  - Examples:
+    - Real-World Use Cases: examples/use-cases.md
+    - Troubleshooting: examples/troubleshooting.md
+  - Reference:
+    - Configuration: reference/configuration.md
+    - Command Line: reference/command-line.md
+    - API Reference: reference/api.md
+  - FAQ: faq.md
+
+extra_css:
+  - stylesheets/toto.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/TonieToolbox/TonieToolbox
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/r/quentendo64/tonietoolbox
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/tonietoolbox/
+
+copyright: Copyright &copy; 2025 Quentendo64. Licensed under GPL v3.
