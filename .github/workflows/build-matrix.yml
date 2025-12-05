@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.12','3.13','3.14']
+        python-version: ['3.14']
         architecture: [x64, arm64]
         exclude:
           - os: windows-latest
@@ -81,19 +81,19 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update -qq
-        sudo apt-get install -y --no-install-recommends ffmpeg opus-tools
+        sudo apt-get install -y --no-install-recommends ffmpeg
 
     - name: Install system dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
         export HOMEBREW_NO_AUTO_UPDATE=1
         export HOMEBREW_NO_INSTALL_CLEANUP=1
-        brew install ffmpeg opus-tools
+        brew install ffmpeg
 
     - name: Install system dependencies (Windows)
       if: runner.os == 'Windows'
       run: |
-        choco install ffmpeg opus-tools
+        choco install ffmpeg
 
     - name: Cache Python wheels
       uses: actions/cache@v4
@@ -115,10 +115,9 @@ jobs:
 
     - name: Test package installation
       run: |
-        # Test that the package can be installed and imported
-        pip install .
+        # Test that the package can be imported and CLI is available
         python -c "import TonieToolbox; print('Package imported successfully')"
-        tonietoolbox --version || echo "CLI command test failed"
+        tonietoolbox --version
 
     - name: Test tonietoolbox conversion (Unix)
       if: runner.os != 'Windows'
@@ -129,6 +128,7 @@ jobs:
           DEBUG_FLAG="--debug"
         fi
 
+        mkdir -p ./output
         if ! tonietoolbox ./tests/data/test_audio.mp3 $DEBUG_FLAG; then
           echo "MP3 conversion command test failed"
           exit 1
@@ -157,6 +157,7 @@ jobs:
           $DEBUG_FLAG = "--debug"
         }
         
+        New-Item -ItemType Directory -Force -Path ./output | Out-Null
         try {
           tonietoolbox ./tests/data/test_audio.mp3 $DEBUG_FLAG
           if ($LASTEXITCODE -ne 0) { throw "MP3 conversion command test failed" }

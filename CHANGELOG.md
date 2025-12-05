@@ -5,6 +5,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Documentation Links**: Fixed broken links in README.md and docs/en/index.md pointing to wrong base URL.
+- **DockerHub Image Name**: Updated DockerHub image name in GitHub Actions workflow to `tonietoolbox/tonietoolbox` for consistency with new organization.
+
+### Changed
+- **Build Matrix Python Versions**: Updated GitHub Actions build matrix to only include Python 3.14, removing older versions to align with new minimum requirement.
+- **Removeing opus-tools from Dependencies**: Removed `opus-tools` from system dependencies in GitHub Actions workflows, as it is no longer required in the new architecture.
+
+### Known Issues (Alpha Release)
+- ** Probably more to come... **: This is an alpha release, so please report any issues you encounter!
+
 ## [1.0.0a1] - 2025-12-05
 
 ### Added

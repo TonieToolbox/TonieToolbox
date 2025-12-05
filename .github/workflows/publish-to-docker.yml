@@ -12,7 +12,7 @@ env:
   REGISTRY_DOCKERHUB: docker.io
   REGISTRY_GITHUB: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  DOCKERHUB_IMAGE_NAME: quentendo64/tonietoolbox
+  DOCKERHUB_IMAGE_NAME: tonietoolbox/tonietoolbox
 
 jobs:
   build:

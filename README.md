@@ -51,8 +51,8 @@ tonietoolbox input.mp3 --upload https://teddycloud.local --include-artwork
 
 | Resource | Description |
 |----------|-------------|
-| 📚 **[Complete Documentation](https://tonietoolbox.github.io)** | Full user guide |
-| 🔰 **[Beginner's Guide](https://tonietoolbox.github.io/getting-started/)** | Step-by-step instructions for new users |
+| 📚 **[Complete Documentation](https://tonietoolbox.github.io/TonieToolbox/)** | Full user guide |
+| 🔰 **[Beginner's Guide](https://tonietoolbox.github.io/TonieToolbox/getting-started/)** | Step-by-step instructions for new users |
 | 🛠️ **[Contributing](CONTRIBUTING.md)** | Guidelines for contributors |
 | 📋 **[Changelog](CHANGELOG.md)** | Version history and updates |
 
@@ -102,7 +102,7 @@ pip install -e .
 
 - **🐛 [Issues](https://github.com/TonieToolbox/TonieToolbox/issues)** - Bug reports and feature requests
 - **💬 [Discussions](https://github.com/TonieToolbox/TonieToolbox/discussions)** - Community Q&A and ideas
-- **📖 [Documentation](https://tonietoolbox.github.io)** - Complete user guide
+- **📖 [Documentation](https://tonietoolbox.github.io/TonieToolbox/)** - Complete user guide
 
 ## ⚖️ Legal Notice
 

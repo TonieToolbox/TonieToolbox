@@ -54,7 +54,7 @@ tonietoolbox = "TonieToolbox.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["TonieToolbox*"]
-exclude = ["output*", "tests*", "docs*", "scripts*"]
+exclude = ["output*", "tests*", "docs*", "scripts*", "tonietoolbox.py"]
 
 [tool.setuptools.dynamic]
 version = {attr = "TonieToolbox.__version__"}
