@@ -73,11 +73,12 @@ class ApplicationCoordinator:
         Returns:
             Exit code: 0 for success, non-zero for errors
         """
-        # Handle GUI mode (both --gui and --play flags)
-        if args.gui or args.play:
+        # Handle GUI mode only if explicitly requested with --gui flag
+        # If --play is specified without --gui, it will be handled by processing service
+        if args.gui:
             return self._launch_gui_mode(args)
         
-        # Handle file processing mode
+        # Handle file processing mode (includes --play without --gui)
         if not self.processing_service:
             logger.error("Processing service not configured")
             return 1
@@ -97,9 +98,20 @@ class ApplicationCoordinator:
             input_path = None
             auto_play = getattr(args, 'play', False)
             
-            if (hasattr(args, 'input_filename') and args.input_filename and 
-                os.path.exists(args.input_filename)):
-                input_path = Path(args.input_filename)
+            input_filename = getattr(args, 'input_filename', None)
+            logger.debug(f"GUI mode: input_filename={input_filename!r}")
+            logger.debug(f"GUI mode: auto_play={auto_play}")
+            
+            if input_filename:
+                logger.debug(f"Checking file existence: {input_filename!r}")
+                file_exists = os.path.exists(input_filename)
+                logger.debug(f"File exists check result: {file_exists}")
+                
+                if file_exists:
+                    input_path = Path(input_filename)
+                    logger.info(f"GUI mode: Loading file: {input_path}")
+                else:
+                    logger.warning(f"Input file does not exist: {input_filename!r}")
             
             return self.gui_factory.create_and_run_gui(input_path, logger, auto_play)
             

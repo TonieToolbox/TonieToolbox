@@ -15,14 +15,14 @@ logger = get_logger(__name__)
 class IntegrationManager:
     """Manages platform-specific integrations using the modular system."""
     
-    def __init__(self, exe_path: str, output_dir: str, 
+    def __init__(self, exe_path: Optional[str] = None, output_dir: str = None, 
                  upload_config: Optional[UploadConfiguration] = None,
                  log_level: str = "INFO", log_to_file: bool = False):
         """
         Initialize the integration manager.
         
         Args:
-            exe_path: Path to the TonieToolbox executable
+            exe_path: Path to the TonieToolbox executable (None = auto-detect)
             output_dir: Directory for integration files
             upload_config: Upload configuration (optional)
             log_level: Logging level
@@ -365,7 +365,7 @@ class IntegrationManager:
 
 
 # Convenience helper functions
-def install_integration(exe_path: str, output_dir: str, 
+def install_integration(exe_path: Optional[str] = None, output_dir: str = None, 
                        upload_config: Optional[UploadConfiguration] = None,
                        integration_name: Optional[str] = None,
                        log_level: str = "INFO", log_to_file: bool = False) -> bool:
@@ -376,7 +376,7 @@ def install_integration(exe_path: str, output_dir: str,
     integration for the current platform if not specified.
     
     Args:
-        exe_path: Path to the tonietoolbox executable
+        exe_path: Path to the tonietoolbox executable (None = auto-detect)
         output_dir: Directory for integration files (icons, service menus, etc.)
         upload_config: Optional TeddyCloud upload configuration
         integration_name: Optional specific integration to install
@@ -417,7 +417,7 @@ def install_integration(exe_path: str, output_dir: str,
     return manager.install_integration(integration_name)
 
 
-def uninstall_integration(exe_path: str, output_dir: str,
+def uninstall_integration(exe_path: Optional[str] = None, output_dir: str = None,
                          upload_config: Optional[UploadConfiguration] = None,
                          integration_name: Optional[str] = None,
                          log_level: str = "INFO", log_to_file: bool = False) -> bool:
@@ -428,7 +428,7 @@ def uninstall_integration(exe_path: str, output_dir: str,
     and shell completions.
     
     Args:
-        exe_path: Path to the tonietoolbox executable (for reference)
+        exe_path: Path to the tonietoolbox executable (None = auto-detect, not used for uninstall)
         output_dir: Directory containing integration files
         upload_config: Optional upload configuration (not used for uninstall)
         integration_name: Optional specific integration to remove

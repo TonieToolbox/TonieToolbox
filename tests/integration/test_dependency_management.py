@@ -70,32 +70,37 @@ class TestDependencyAutoDownload:
     
     @pytest.mark.slow
     def test_ffmpeg_auto_download_when_not_in_path(self):
-        """Test that FFmpeg is downloaded when not found in PATH and auto_download=True."""
+        """Test that FFmpeg is downloaded when not found and auto_download=True."""
         # Remove FFmpeg from PATH
         self._remove_ffmpeg_from_path()
         
         # Create a config manager with our temporary libs directory
-        with patch('TonieToolbox.core.config.manager.ConfigManager') as mock_config_class:
+        with patch('TonieToolbox.core.config.manager.get_config_manager') as mock_get_config:
             mock_config = MagicMock()
-            mock_dependency_config = MagicMock()
-            mock_dependency_config.effective_libs_dir = self.temp_libs_dir
-            mock_dependency_config.effective_cache_dir = os.path.join(self.temp_libs_dir, 'cache')
-            mock_config.get_dependency_config.return_value = mock_dependency_config
-            mock_config_class.return_value = mock_config
+            # Mock get_setting to return proper paths
+            def get_setting_side_effect(key):
+                if key == 'dependencies.cache.cache_dir':
+                    return os.path.join(self.temp_libs_dir, 'cache')
+                elif key == 'dependencies.cache.libs_dir':
+                    return self.temp_libs_dir
+                return None
+            
+            mock_config.get_setting.side_effect = get_setting_side_effect
+            mock_get_config.return_value = mock_config
             
             # Create dependency manager
             dependency_manager = DependencyManager()
             
             # First, verify FFmpeg is not available without auto-download in our clean temp directory
             # Note: we're using a clean temp directory so no pre-existing FFmpeg should be found
-            ffmpeg_path = dependency_manager.get_ffmpeg_binary(auto_download=False)
+            ffmpeg_path = dependency_manager.get_ffmpeg_binary(auto_download=False, force_creation=False)
             if ffmpeg_path is not None:
                 # If FFmpeg is found, it means there's a system installation or pre-existing download
                 # This is actually a valid scenario, so we'll skip the first assertion and continue
                 pass
             
-            # Now test auto-download
-            ffmpeg_path = dependency_manager.get_ffmpeg_binary(auto_download=True)
+            # Now test auto-download (should download only once, then reuse)
+            ffmpeg_path = dependency_manager.get_ffmpeg_binary(auto_download=True, force_creation=False)
             
             # Verify that either:
             # 1. FFmpeg was successfully downloaded, OR
@@ -125,22 +130,27 @@ class TestDependencyAutoDownload:
     
     @pytest.mark.slow
     def test_ffmpeg_reuse_existing_download(self):
-        """Test that existing downloaded FFmpeg is reused."""
+        """Test that existing downloaded FFmpeg is reused when auto-download is used without force_creation."""
         # Remove FFmpeg from PATH
         self._remove_ffmpeg_from_path()
         
-        with patch('TonieToolbox.core.config.manager.ConfigManager') as mock_config_class:
+        with patch('TonieToolbox.core.config.manager.get_config_manager') as mock_get_config:
             mock_config = MagicMock()
-            mock_dependency_config = MagicMock()
-            mock_dependency_config.effective_libs_dir = self.temp_libs_dir
-            mock_dependency_config.effective_cache_dir = os.path.join(self.temp_libs_dir, 'cache')
-            mock_config.get_dependency_config.return_value = mock_dependency_config
-            mock_config_class.return_value = mock_config
+            # Mock get_setting to return proper paths
+            def get_setting_side_effect(key):
+                if key == 'dependencies.cache.cache_dir':
+                    return os.path.join(self.temp_libs_dir, 'cache')
+                elif key == 'dependencies.cache.libs_dir':
+                    return self.temp_libs_dir
+                return None
+            
+            mock_config.get_setting.side_effect = get_setting_side_effect
+            mock_get_config.return_value = mock_config
             
             dependency_manager = DependencyManager()
             
-            # First download
-            ffmpeg_path_1 = dependency_manager.get_ffmpeg_binary(auto_download=True)
+            # First download with auto_download
+            ffmpeg_path_1 = dependency_manager.get_ffmpeg_binary(auto_download=True, force_creation=False)
             
             if ffmpeg_path_1 is None:
                 pytest.skip("FFmpeg auto-download failed - cannot test reuse")
@@ -148,12 +158,67 @@ class TestDependencyAutoDownload:
             # Record modification time of the downloaded binary
             initial_mtime = os.path.getmtime(ffmpeg_path_1)
             
-            # Second call without auto-download should find existing binary
-            ffmpeg_path_2 = dependency_manager.get_ffmpeg_binary(auto_download=False)
-            assert ffmpeg_path_2 == ffmpeg_path_1, "Should reuse existing downloaded FFmpeg"
+            # Second call WITH auto-download should reuse existing binary (not re-download)
+            ffmpeg_path_2 = dependency_manager.get_ffmpeg_binary(auto_download=True, force_creation=False)
+            assert ffmpeg_path_2 == ffmpeg_path_1, "Should reuse existing downloaded FFmpeg when force_creation=False"
             
             # Modification time should be the same (not re-downloaded)
-            assert os.path.getmtime(ffmpeg_path_2) == initial_mtime, "Binary should not be re-downloaded"
+            assert os.path.getmtime(ffmpeg_path_2) == initial_mtime, "Binary should not be re-downloaded without force_creation"
+            
+            # Third call without auto-download should also find existing binary
+            ffmpeg_path_3 = dependency_manager.get_ffmpeg_binary(auto_download=False)
+            assert ffmpeg_path_3 == ffmpeg_path_1, "Should find existing downloaded FFmpeg without auto-download"
+    
+    @pytest.mark.slow
+    def test_ffmpeg_force_creation_redownload(self):
+        """Test that force_creation flag forces re-download of FFmpeg."""
+        # Remove FFmpeg from PATH
+        self._remove_ffmpeg_from_path()
+        
+        with patch('TonieToolbox.core.config.manager.get_config_manager') as mock_get_config:
+            mock_config = MagicMock()
+            # Mock get_setting to return proper paths
+            def get_setting_side_effect(key):
+                if key == 'dependencies.cache.cache_dir':
+                    return os.path.join(self.temp_libs_dir, 'cache')
+                elif key == 'dependencies.cache.libs_dir':
+                    return self.temp_libs_dir
+                return None
+            
+            mock_config.get_setting.side_effect = get_setting_side_effect
+            mock_get_config.return_value = mock_config
+            
+            dependency_manager = DependencyManager()
+            
+            # First download
+            ffmpeg_path_1 = dependency_manager.get_ffmpeg_binary(auto_download=True, force_creation=False)
+            
+            if ffmpeg_path_1 is None:
+                pytest.skip("FFmpeg auto-download failed - cannot test force_creation")
+            
+            # Record modification time of the downloaded binary
+            initial_mtime = os.path.getmtime(ffmpeg_path_1)
+            
+            # Wait a brief moment to ensure different timestamps
+            import time
+            time.sleep(0.1)
+            
+            # Second call WITH force_creation should trigger re-download
+            ffmpeg_path_2 = dependency_manager.get_ffmpeg_binary(auto_download=True, force_creation=True)
+            
+            if ffmpeg_path_2 is None:
+                pytest.skip("FFmpeg re-download with force_creation failed")
+            
+            # The binary should exist (might be same path or different)
+            assert os.path.exists(ffmpeg_path_2), "Re-downloaded FFmpeg should exist"
+            
+            # Verify the binary works
+            try:
+                result = subprocess.run([ffmpeg_path_2, '-version'], 
+                                      capture_output=True, text=True, timeout=10)
+                assert result.returncode == 0, "Re-downloaded FFmpeg should be functional"
+            except (subprocess.TimeoutExpired, FileNotFoundError):
+                pytest.fail("Re-downloaded FFmpeg binary is not executable")
     
     def test_ffmpeg_system_binary_preferred_over_download(self):
         """Test that system FFmpeg is preferred over auto-download when available."""
@@ -162,13 +227,18 @@ class TestDependencyAutoDownload:
         if not system_ffmpeg:
             pytest.skip("System FFmpeg not available for this test")
         
-        with patch('TonieToolbox.core.config.manager.ConfigManager') as mock_config_class:
+        with patch('TonieToolbox.core.config.manager.get_config_manager') as mock_get_config:
             mock_config = MagicMock()
-            mock_dependency_config = MagicMock()
-            mock_dependency_config.effective_libs_dir = self.temp_libs_dir
-            mock_dependency_config.effective_cache_dir = os.path.join(self.temp_libs_dir, 'cache')
-            mock_config.get_dependency_config.return_value = mock_dependency_config
-            mock_config_class.return_value = mock_config
+            # Mock get_setting to return proper paths
+            def get_setting_side_effect(key):
+                if key == 'dependencies.cache.cache_dir':
+                    return os.path.join(self.temp_libs_dir, 'cache')
+                elif key == 'dependencies.cache.libs_dir':
+                    return self.temp_libs_dir
+                return None
+            
+            mock_config.get_setting.side_effect = get_setting_side_effect
+            mock_get_config.return_value = mock_config
             
             dependency_manager = DependencyManager()
             
@@ -219,13 +289,18 @@ class TestDependencyAutoDownload:
         """Test that auto-downloaded FFmpeg is functional and can be used for conversion."""
         # This test verifies that the auto-download mechanism produces a working FFmpeg binary
         
-        with patch('TonieToolbox.core.config.manager.ConfigManager') as mock_config_class:
+        with patch('TonieToolbox.core.config.manager.get_config_manager') as mock_get_config:
             mock_config = MagicMock()
-            mock_dependency_config = MagicMock()
-            mock_dependency_config.effective_libs_dir = self.temp_libs_dir
-            mock_dependency_config.effective_cache_dir = os.path.join(self.temp_libs_dir, 'cache')
-            mock_config.get_dependency_config.return_value = mock_dependency_config
-            mock_config_class.return_value = mock_config
+            # Mock get_setting to return proper paths
+            def get_setting_side_effect(key):
+                if key == 'dependencies.cache.cache_dir':
+                    return os.path.join(self.temp_libs_dir, 'cache')
+                elif key == 'dependencies.cache.libs_dir':
+                    return self.temp_libs_dir
+                return None
+            
+            mock_config.get_setting.side_effect = get_setting_side_effect
+            mock_get_config.return_value = mock_config
             
             dependency_manager = DependencyManager()
             

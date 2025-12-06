@@ -129,7 +129,7 @@ jobs:
         fi
 
         mkdir -p ./output
-        if ! tonietoolbox ./tests/data/test_audio.mp3 $DEBUG_FLAG; then
+        if ! tonietoolbox ./tests/data/test_audio.mp3 --force-creation $DEBUG_FLAG; then
           echo "MP3 conversion command test failed"
           exit 1
         fi
@@ -159,7 +159,7 @@ jobs:
         
         New-Item -ItemType Directory -Force -Path ./output | Out-Null
         try {
-          tonietoolbox ./tests/data/test_audio.mp3 $DEBUG_FLAG
+          tonietoolbox ./tests/data/test_audio.mp3 --force-creation $DEBUG_FLAG
           if ($LASTEXITCODE -ne 0) { throw "MP3 conversion command test failed" }
         } catch {
           Write-Error "MP3 conversion command test failed"

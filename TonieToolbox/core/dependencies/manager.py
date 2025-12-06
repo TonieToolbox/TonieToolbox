@@ -26,6 +26,18 @@ DEPENDENCIES = {
     }
 }
 
+FFMPEG_DEPENDENCIES = {
+    'windows': {'binary_name': 'ffmpeg.exe'},
+    'linux': {'binary_name': 'ffmpeg'},
+    'darwin': {'binary_name': 'ffmpeg'}
+}
+
+FFPROBE_DEPENDENCIES = {
+    'windows': {'binary_name': 'ffprobe.exe'},
+    'linux': {'binary_name': 'ffprobe'},
+    'darwin': {'binary_name': 'ffprobe'}
+}
+
 FFPLAY_DEPENDENCIES = {
     'windows': {'binary_name': 'ffplay.exe'},
     'linux': {'binary_name': 'ffplay'},
@@ -49,18 +61,20 @@ class DependencyManager:
         os.makedirs(cache_dir, exist_ok=True)
         os.makedirs(libs_dir, exist_ok=True)
     
-    def ensure_dependency(self, dependency_name: str, auto_download: bool = False) -> Optional[str]:
+    def ensure_dependency(self, dependency_name: str, auto_download: bool = False, force_creation: bool = False) -> Optional[str]:
         """
         Ensure that a dependency is available, downloading it if necessary.
         
         Args:
             dependency_name: Name of the dependency ('ffmpeg', etc.)
             auto_download: Whether to automatically download or install the dependency if not found
+            force_creation: Force re-download even if dependency exists (requires auto_download=True)
             
         Returns:
             str: Path to the binary if available, None otherwise
         """
-        self.logger.debug("Ensuring dependency: %s", dependency_name)
+        self.logger.debug("Ensuring dependency: %s (auto_download=%s, force_creation=%s)", 
+                         dependency_name, auto_download, force_creation)
         
         if dependency_name not in DEPENDENCIES:
             self.logger.error("Unknown dependency: %s", dependency_name)
@@ -75,16 +89,20 @@ class DependencyManager:
         
         dependency_info = DependencyInfo(dependency_name, dependency_config)
         
-        # Check for existing installation first
-        if not auto_download:
+        # Check for existing installation first (unless force_creation is set)
+        if not force_creation:
             existing_path = self._find_existing_dependency(dependency_name, dependency_info)
             if existing_path:
+                self.logger.debug("Using existing %s: %s", dependency_name, existing_path)
                 return existing_path
         
-        # If auto_download is enabled, force re-download
+        # If auto_download is enabled, download/install the dependency
         if auto_download:
-            self.logger.info("Auto-download enabled, forcing download/installation of %s", dependency_name)
-            return self._install_dependency(dependency_info, force_download=True)
+            if force_creation:
+                self.logger.info("Force creation enabled, re-downloading %s", dependency_name)
+            else:
+                self.logger.info("Auto-download enabled, downloading %s", dependency_name)
+            return self._install_dependency(dependency_info, force_download=force_creation)
         
         # If not found and auto_download is disabled, show warning
         self.logger.warning("%s not found in libs directory or PATH and auto-download is disabled. "
@@ -94,17 +112,25 @@ class DependencyManager:
     def _find_existing_dependency(self, dependency_name: str, dependency_info: DependencyInfo) -> Optional[str]:
         """Find an existing installation of the dependency."""
         
+        # Get the platform-specific binary name
+        platform_name = self.platform.get_platform_name()
+        binary_name = dependency_name
+        
+        # For FFmpeg, use the platform-specific binary name
+        if dependency_name == 'ffmpeg' and platform_name in FFMPEG_DEPENDENCIES:
+            binary_name = FFMPEG_DEPENDENCIES[platform_name].get('binary_name', dependency_name)
+        
         # Check previously downloaded version in libs directory
         libs_dir = self.config_manager.get_setting('dependencies.cache.libs_dir')
         dependency_dir = os.path.join(libs_dir, dependency_name)
         if os.path.exists(dependency_dir):
-            binary_path = self._find_binary_in_dir(dependency_dir, dependency_info.bin_path or dependency_name)
+            binary_path = self._find_binary_in_dir(dependency_dir, dependency_info.bin_path or binary_name)
             if binary_path and self._validate_binary(dependency_name, binary_path):
                 self.logger.debug("Found previously downloaded %s: %s", dependency_name, binary_path)
                 return binary_path
         
         # Check system PATH
-        system_path = self.platform.find_system_binary(dependency_name)
+        system_path = self.platform.find_system_binary(binary_name)
         if system_path and self._validate_binary(dependency_name, system_path):
             self.logger.debug("Found %s in PATH: %s", dependency_name, system_path)
             return system_path
@@ -180,10 +206,18 @@ class DependencyManager:
             self.logger.error("Failed to extract %s", dependency_name)
             return None
         
+        # Get the platform-specific binary name
+        platform_name = self.platform.get_platform_name()
+        binary_name = dependency_name
+        
+        # For FFmpeg, use the platform-specific binary name
+        if dependency_name == 'ffmpeg' and platform_name in FFMPEG_DEPENDENCIES:
+            binary_name = FFMPEG_DEPENDENCIES[platform_name].get('binary_name', dependency_name)
+        
         # Find the extracted binary (fallback to dependency name if bin_path not specified)
-        binary_path = self._find_binary_in_dir(dependency_dir, dependency_info.bin_path or dependency_name)
+        binary_path = self._find_binary_in_dir(dependency_dir, dependency_info.bin_path or binary_name)
         if not binary_path:
-            self.logger.error("Binary not found after extraction: %s", dependency_info.bin_path or dependency_name)
+            self.logger.error("Binary not found after extraction: %s", dependency_info.bin_path or binary_name)
             return None
         
         # Make executable on Unix-like systems
@@ -231,20 +265,29 @@ class DependencyManager:
             
         self.logger.debug("Looking for binary %s in %s", binary_path, directory)
         
+        # On Windows, ensure we search for .exe extension
+        platform_name = self.platform.get_platform_name()
+        search_names = [binary_path]
+        if platform_name == 'windows' and not binary_path.endswith('.exe'):
+            search_names.append(binary_path + '.exe')
+        
         # Try direct path first
-        direct_path = os.path.join(directory, binary_path)
-        if os.path.exists(direct_path):
-            self.logger.debug("Found binary at direct path: %s", direct_path)
-            return direct_path
+        for search_name in search_names:
+            direct_path = os.path.join(directory, search_name)
+            if os.path.exists(direct_path):
+                self.logger.debug("Found binary at direct path: %s", direct_path)
+                return direct_path
         
         # Search in directory tree
         self.logger.debug("Searching for binary in directory tree")
         for root, _, files in os.walk(directory):
             for f in files:
-                if f == os.path.basename(binary_path) or f == binary_path:
-                    full_path = os.path.join(root, f)
-                    self.logger.debug("Found binary at: %s", full_path)
-                    return full_path
+                # Check if filename matches (with or without .exe on Windows)
+                for search_name in search_names:
+                    if f == os.path.basename(search_name) or f == search_name:
+                        full_path = os.path.join(root, f)
+                        self.logger.debug("Found binary at: %s", full_path)
+                        return full_path
         
         self.logger.warning("Binary %s not found in %s", binary_path, directory)
         return None
@@ -274,11 +317,60 @@ class DependencyManager:
     
     # Public convenience methods for specific tools
     
-    def get_ffmpeg_binary(self, auto_download: bool = False) -> Optional[str]:
+    def get_ffmpeg_binary(self, auto_download: bool = False, force_creation: bool = False) -> Optional[str]:
         """Get the path to the FFmpeg binary."""
-        return self.ensure_dependency('ffmpeg', auto_download)
+        return self.ensure_dependency('ffmpeg', auto_download, force_creation)
     
-    def get_ffplay_binary(self, auto_download: bool = False) -> Optional[str]:
+    def get_ffprobe_binary(self, auto_download: bool = False, force_creation: bool = False) -> Optional[str]:
+        """Get the path to the FFprobe binary."""
+        platform_name = self.platform.get_platform_name()
+        ffprobe_config = FFPROBE_DEPENDENCIES.get(platform_name, {})
+        
+        if not ffprobe_config:
+            self.logger.error("No FFprobe configuration for platform: %s", platform_name)
+            return None
+        
+        # FFprobe is typically bundled with FFmpeg
+        libs_dir = self.config_manager.get_setting('dependencies.cache.libs_dir')
+        ffmpeg_dir = os.path.join(libs_dir, 'ffmpeg')
+        
+        # Check if FFprobe exists in the FFmpeg directory (unless force_creation is set)
+        if not force_creation:
+            ffprobe_binary_name = ffprobe_config.get('binary_name', 'ffprobe')
+            
+            # Search in the FFmpeg directory tree
+            if os.path.exists(ffmpeg_dir):
+                ffprobe_path = self._find_binary_in_dir(ffmpeg_dir, ffprobe_binary_name)
+                if ffprobe_path and self._validate_binary('ffprobe', ffprobe_path):
+                    self.logger.debug("FFprobe found in FFmpeg directory: %s", ffprobe_path)
+                    return ffprobe_path
+            
+            # Check system PATH
+            system_path = self.platform.find_system_binary(ffprobe_binary_name)
+            if system_path and self._validate_binary('ffprobe', system_path):
+                self.logger.info("Found FFprobe in PATH: %s", system_path)
+                return system_path
+        
+        # If auto_download is enabled, try to get FFmpeg (which includes FFprobe)
+        if auto_download:
+            self.logger.info("FFprobe not found, attempting to get FFmpeg (which includes FFprobe)")
+            ffmpeg_path = self.get_ffmpeg_binary(auto_download=True, force_creation=force_creation)
+            if ffmpeg_path:
+                # Check again for FFprobe after FFmpeg download
+                ffprobe_binary_name = ffprobe_config.get('binary_name', 'ffprobe')
+                if os.path.exists(ffmpeg_dir):
+                    ffprobe_path = self._find_binary_in_dir(ffmpeg_dir, ffprobe_binary_name)
+                    if ffprobe_path and self._validate_binary('ffprobe', ffprobe_path):
+                        self.logger.info("FFprobe found after FFmpeg download: %s", ffprobe_path)
+                        return ffprobe_path
+            
+            self.logger.warning("FFprobe not available even after FFmpeg download")
+            return None
+        
+        self.logger.warning("FFprobe is not available and --auto-download is not used.")
+        return None
+    
+    def get_ffplay_binary(self, auto_download: bool = False, force_creation: bool = False) -> Optional[str]:
         """Get the path to the FFplay binary."""
         platform_name = self.platform.get_platform_name()
         ffplay_config = FFPLAY_DEPENDENCIES.get(platform_name, {})
@@ -291,28 +383,35 @@ class DependencyManager:
         libs_dir = self.config_manager.get_setting('dependencies.cache.libs_dir')
         ffmpeg_dir = os.path.join(libs_dir, 'ffmpeg')
         
-        # Check if FFplay exists in the FFmpeg directory
-        ffplay_binary_name = ffplay_config.get('binary_name', 'ffplay')
-        ffplay_path = os.path.join(ffmpeg_dir, ffplay_binary_name)
-        if os.path.exists(ffplay_path) and self._validate_binary('ffplay', ffplay_path):
-            self.logger.debug("FFplay found in FFmpeg directory: %s", ffplay_path)
-            return ffplay_path
-        
-        # Check system PATH
-        system_path = self.platform.find_system_binary('ffplay')
-        if system_path and self._validate_binary('ffplay', system_path):
-            self.logger.info("Found FFplay in PATH: %s", system_path)
-            return system_path
+        # Check if FFplay exists in the FFmpeg directory (unless force_creation is set)
+        if not force_creation:
+            ffplay_binary_name = ffplay_config.get('binary_name', 'ffplay')
+            
+            # Search in the FFmpeg directory tree
+            if os.path.exists(ffmpeg_dir):
+                ffplay_path = self._find_binary_in_dir(ffmpeg_dir, ffplay_binary_name)
+                if ffplay_path and self._validate_binary('ffplay', ffplay_path):
+                    self.logger.debug("FFplay found in FFmpeg directory: %s", ffplay_path)
+                    return ffplay_path
+            
+            # Check system PATH
+            system_path = self.platform.find_system_binary(ffplay_binary_name)
+            if system_path and self._validate_binary('ffplay', system_path):
+                self.logger.info("Found FFplay in PATH: %s", system_path)
+                return system_path
         
         # If auto_download is enabled, try to get FFmpeg (which includes FFplay)
         if auto_download:
             self.logger.info("FFplay not found, attempting to get FFmpeg (which includes FFplay)")
-            ffmpeg_path = self.get_ffmpeg_binary(auto_download=True)
+            ffmpeg_path = self.get_ffmpeg_binary(auto_download=True, force_creation=force_creation)
             if ffmpeg_path:
                 # Check again for FFplay after FFmpeg download
-                if os.path.exists(ffplay_path) and self._validate_binary('ffplay', ffplay_path):
-                    self.logger.info("FFplay found after FFmpeg download: %s", ffplay_path)
-                    return ffplay_path
+                ffplay_binary_name = ffplay_config.get('binary_name', 'ffplay')
+                if os.path.exists(ffmpeg_dir):
+                    ffplay_path = self._find_binary_in_dir(ffmpeg_dir, ffplay_binary_name)
+                    if ffplay_path and self._validate_binary('ffplay', ffplay_path):
+                        self.logger.info("FFplay found after FFmpeg download: %s", ffplay_path)
+                        return ffplay_path
             
             self.logger.warning("FFplay not available even after FFmpeg download")
             return None
@@ -333,14 +432,18 @@ def get_dependency_manager() -> DependencyManager:
 
 
 # Convenience helper functions
-def get_ffmpeg_binary(auto_download: bool = False) -> Optional[str]:
+def get_ffmpeg_binary(auto_download: bool = False, force_creation: bool = False) -> Optional[str]:
     """Get the path to the FFmpeg binary."""
-    return get_dependency_manager().get_ffmpeg_binary(auto_download)
+    return get_dependency_manager().get_ffmpeg_binary(auto_download, force_creation)
 
-def get_ffplay_binary(auto_download: bool = False) -> Optional[str]:
+def get_ffprobe_binary(auto_download: bool = False, force_creation: bool = False) -> Optional[str]:
+    """Get the path to the FFprobe binary."""
+    return get_dependency_manager().get_ffprobe_binary(auto_download, force_creation)
+
+def get_ffplay_binary(auto_download: bool = False, force_creation: bool = False) -> Optional[str]:
     """Get the path to the FFplay binary."""
-    return get_dependency_manager().get_ffplay_binary(auto_download)
+    return get_dependency_manager().get_ffplay_binary(auto_download, force_creation)
 
-def ensure_dependency(dependency_name: str, auto_download: bool = False) -> Optional[str]:
-    """Ensure that a dependency is available."""
-    return get_dependency_manager().ensure_dependency(dependency_name, auto_download)
+def ensure_dependency(dependency_name: str, auto_download: bool = False, force_creation: bool = False) -> Optional[str]:
+    """Ensure a dependency is available."""
+    return get_dependency_manager().ensure_dependency(dependency_name, auto_download, force_creation)

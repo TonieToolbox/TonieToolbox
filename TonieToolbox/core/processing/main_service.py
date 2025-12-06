@@ -73,8 +73,11 @@ class MainProcessingService:
             
             # Media converter (FFmpeg)
             ffmpeg_path = self.dependencies.get('ffmpeg', 'ffmpeg')
+            ffprobe_path = self.dependencies.get('ffprobe', 'ffprobe')
+            
             self.media_converter = FFmpegConverter(
                 ffmpeg_path=ffmpeg_path,
+                ffprobe_path=ffprobe_path,
                 logger=logger
             )
             

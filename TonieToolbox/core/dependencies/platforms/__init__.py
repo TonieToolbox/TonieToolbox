@@ -27,6 +27,15 @@ class WindowsPlatform(BasePlatform):
     def find_system_binary(self, binary_name: str) -> Optional[str]:
         """Find a binary in Windows PATH."""
         try:
+            # On Windows, try with and without .exe extension
+            if not binary_name.endswith('.exe'):
+                # First try with .exe extension
+                binary_path = shutil.which(binary_name + '.exe')
+                if binary_path:
+                    self.logger.debug("Found %s at %s", binary_name, binary_path)
+                    return binary_path
+            
+            # Try without modification (in case .exe already included or other extension)
             binary_path = shutil.which(binary_name)
             if binary_path:
                 self.logger.debug("Found %s at %s", binary_name, binary_path)

@@ -168,11 +168,14 @@ class TonieToolboxQtApplication:
             logger.info("All components initialized successfully")
             
             # Call ready callbacks
-            for callback in self._ready_callbacks:
+            logger.debug(f"Executing {len(self._ready_callbacks)} ready callback(s)")
+            for i, callback in enumerate(self._ready_callbacks):
                 try:
+                    logger.debug(f"Calling ready callback {i + 1}/{len(self._ready_callbacks)}")
                     callback()
+                    logger.debug(f"Ready callback {i + 1} completed successfully")
                 except Exception as e:
-                    logger.error(f"Error in ready callback: {e}")
+                    logger.error(f"Error in ready callback {i + 1}: {e}", exc_info=True)
             
         except Exception as e:
             logger.error(f"Failed to initialize components: {e}")

@@ -11,6 +11,7 @@ from .manager import (
     DependencyManager,
     get_dependency_manager,
     get_ffmpeg_binary,
+    get_ffprobe_binary,
     get_ffplay_binary, 
     ensure_dependency
 )
@@ -31,6 +32,7 @@ __all__ = [
     'DependencyManager',
     'get_dependency_manager',
     'get_ffmpeg_binary',
+    'get_ffprobe_binary',
     'get_ffplay_binary',
     'ensure_dependency',
     'DependencyInfo',

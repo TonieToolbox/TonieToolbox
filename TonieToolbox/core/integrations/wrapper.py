@@ -28,16 +28,9 @@ def handle_integration(args: argparse.Namespace) -> bool:
         PermissionError: If insufficient permissions for integration
         ValueError: If upload configuration is invalid
     """
-    # Get executable path - try various methods
+    # Get executable path from args or let integration auto-detect
+    # Do NOT set exe_path here - let the integration's _find_executable() handle it
     exe_path = getattr(args, 'exe_path', None)
-    if not exe_path:
-        # Try to determine from sys.argv[0] or current script
-        exe_path = sys.executable
-        if hasattr(sys, 'frozen'):
-            exe_path = sys.executable
-        else:
-            # Running as script, use python with module
-            exe_path = f"{sys.executable} -m TonieToolbox"
     
     # Set up output directory
     output_dir = os.path.join(os.path.expanduser("~"), ".tonietoolbox")

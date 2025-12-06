@@ -6,12 +6,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Windows File Association (Issue #2)**: Fixed TAF file double-click functionality on Windows
+  - Fixed registry file escaping to use legacy pattern (only escape quotes, not backslashes)
+  - Fixed `InputProcessor.normalize_input_path()` stripping backslashes on Windows
+  - Added platform-specific path normalization (shell escape handling only on Unix)
+  - File paths now correctly preserved through registry execution and argument parsing
+  - GUI now auto-loads and plays TAF files when double-clicked in Windows Explorer
+- **Windows TAF File Association Icon (Issue #2)**: Fixed icon not displaying for TAF files in Windows Explorer
+  - Icon path now properly escaped with double backslashes in registry
+  - TAF files now display correct TonieToolbox icon in file manager
+- **FFmpeg Auto-Download (Issue #1)**: Fixed `--auto-download` to reuse existing FFmpeg installation instead of re-downloading every time. Now only re-downloads when `--force-creation` flag is set.
+- **Windows FFmpeg Detection (Issue #1)**: Fixed FFmpeg binary detection on Windows by:
+  - Properly checking for `.exe` extension when searching in PATH
+  - Searching for both `ffmpeg` and `ffmpeg.exe` when looking in extracted directories
+  - This fixes the issue where downloaded FFmpeg would not be found even though `ffmpeg.exe` existed
+- **Package Build**: Fixed circular import error during `pip install -e .` by excluding standalone `tonietoolbox.py` from package discovery using `py-modules = []` in pyproject.toml.
 - **Documentation Links**: Fixed broken links in README.md and docs/en/index.md pointing to wrong base URL.
 - **DockerHub Image Name**: Updated DockerHub image name in GitHub Actions workflow to `tonietoolbox/tonietoolbox` for consistency with new organization.
 
 ### Changed
+- **Dependency Download Behavior**: `--auto-download` now intelligently reuses existing dependencies. Use `--auto-download --force-creation` together to force re-download.
 - **Build Matrix Python Versions**: Updated GitHub Actions build matrix to only include Python 3.14, removing older versions to align with new minimum requirement.
-- **Removeing opus-tools from Dependencies**: Removed `opus-tools` from system dependencies in GitHub Actions workflows, as it is no longer required in the new architecture.
+- **Removing opus-tools from Dependencies**: Removed `opus-tools` from system dependencies in GitHub Actions workflows, as it is no longer required in the new architecture.
+- **Workflow Improvements**: Removed redundant `pip install .` step and added output directory creation before conversion tests.
 
 ### Known Issues (Alpha Release)
 - ** Probably more to come... **: This is an alpha release, so please report any issues you encounter!

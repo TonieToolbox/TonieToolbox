@@ -29,11 +29,13 @@ class InputProcessor:
         # Remove surrounding quotes
         normalized = input_path.strip('"\'')
         
-        # Handle shell escape sequences (e.g., "\ " -> " ")
-        # This is important for paths with spaces that get shell-escaped
+        # Handle shell escape sequences (e.g., "\ " -> " ") - BUT ONLY ON UNIX
+        # On Windows, backslashes are path separators, not escape characters!
+        import sys
         import re
-        # Replace escaped spaces and other common shell escapes
-        normalized = re.sub(r'\\(.)', r'\1', normalized)
+        if sys.platform != 'win32':
+            # Replace escaped spaces and other common shell escapes on Unix
+            normalized = re.sub(r'\\(.)', r'\1', normalized)
         
         # Remove trailing slashes (but not if it's the root directory)
         if len(normalized) > 1 and normalized.endswith(('/', '\\')):

@@ -10,7 +10,7 @@ import sys
 import logging
 from typing import Dict
 
-from ..dependencies import get_ffmpeg_binary, ensure_dependency
+from ..dependencies import get_ffmpeg_binary, get_ffprobe_binary, ensure_dependency
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -30,26 +30,45 @@ class DependencyCommandProcessor:
         # Setup FFmpeg
         ffmpeg_binary = self._setup_ffmpeg(args)
         
+        # Setup FFprobe (derive from FFmpeg path)
+        ffprobe_binary = self._setup_ffprobe(ffmpeg_binary, args)
+        
         # Handle media tags dependencies
         self._setup_media_tags(args)
         
         return {
-            'ffmpeg': ffmpeg_binary
+            'ffmpeg': ffmpeg_binary,
+            'ffprobe': ffprobe_binary
         }
     
     def _setup_ffmpeg(self, args) -> str:
         """Setup FFmpeg binary."""
         ffmpeg_binary = args.ffmpeg
         if ffmpeg_binary is None:
+            force_creation = getattr(args, 'force_creation', False)
             logger.debug("No FFmpeg specified, attempting to locate binary "
-                            "(auto_download=%s)", args.auto_download)
-            ffmpeg_binary = get_ffmpeg_binary(args.auto_download)
+                            "(auto_download=%s, force_creation=%s)", args.auto_download, force_creation)
+            ffmpeg_binary = get_ffmpeg_binary(args.auto_download, force_creation)
             if ffmpeg_binary is None:
                 logger.error("Could not find FFmpeg. Please install FFmpeg "
                                 "or specify its location using --ffmpeg or use --auto-download")
                 sys.exit(1)
             logger.debug("Using FFmpeg binary: %s", ffmpeg_binary)
         return ffmpeg_binary
+    
+    def _setup_ffprobe(self, ffmpeg_binary: str, args) -> str:
+        """Setup FFprobe binary."""
+        # FFprobe is typically bundled with FFmpeg, so we use the same auto_download flag
+        force_creation = getattr(args, 'force_creation', False)
+        logger.debug("Attempting to locate FFprobe binary "
+                        "(auto_download=%s, force_creation=%s)", args.auto_download, force_creation)
+        ffprobe_binary = get_ffprobe_binary(args.auto_download, force_creation)
+        if ffprobe_binary is None:
+            logger.error("Could not find FFprobe. Please install FFmpeg "
+                            "(which includes FFprobe) or use --auto-download")
+            sys.exit(1)
+        logger.debug("Using FFprobe binary: %s", ffprobe_binary)
+        return ffprobe_binary
     
     def _setup_media_tags(self, args) -> None:
         """Setup media tags dependencies if needed."""

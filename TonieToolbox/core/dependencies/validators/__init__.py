@@ -78,6 +78,37 @@ class FFplayValidator(BaseValidator):
             return False
 
 
+class FFprobeValidator(BaseValidator):
+    """Validator for FFprobe binary."""
+    
+    def validate(self, binary_path: str) -> bool:
+        """Validate FFprobe binary by running -version command."""
+        try:
+            cmd = [binary_path, '-version']
+            result = subprocess.run(
+                cmd, 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE, 
+                timeout=5,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                self.logger.debug("FFprobe validation successful: %s", binary_path)
+                return True
+            else:
+                self.logger.warning("FFprobe returned error code %d: %s", 
+                                  result.returncode, result.stderr)
+                return False
+                
+        except subprocess.TimeoutExpired:
+            self.logger.error("FFprobe validation timed out: %s", binary_path)
+            return False
+        except Exception as e:
+            self.logger.error("Error validating FFprobe %s: %s", binary_path, e)
+            return False
+
+
 
 
 class ValidatorFactory:
@@ -85,6 +116,7 @@ class ValidatorFactory:
     
     _validators = {
         'ffmpeg': FFmpegValidator,
+        'ffprobe': FFprobeValidator,
         'ffplay': FFplayValidator,
     }
     

@@ -52,9 +52,12 @@ Homepage = "https://github.com/TonieToolbox/TonieToolbox"
 [project.scripts]
 tonietoolbox = "TonieToolbox.__main__:main"
 
+[tool.setuptools]
+py-modules = []
+
 [tool.setuptools.packages.find]
 include = ["TonieToolbox*"]
-exclude = ["output*", "tests*", "docs*", "scripts*", "tonietoolbox.py"]
+exclude = ["output*", "tests*", "docs*", "scripts*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "TonieToolbox.__version__"}

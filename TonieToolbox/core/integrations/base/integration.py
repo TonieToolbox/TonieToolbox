@@ -98,8 +98,14 @@ class BaseIntegration(ABC):
     def _find_executable(self) -> str:
         """Find the tonietoolbox executable across different platforms."""
         if sys.platform.startswith('win'):
+            # Primary path (matches legacy behavior - check sys.prefix/Scripts first)
+            primary_path = os.path.join(sys.prefix, 'Scripts', 'tonietoolbox.exe')
+            if os.path.isfile(primary_path):
+                self.logger.debug(f"Found tonietoolbox.exe at: {primary_path}")
+                return primary_path
+            
+            # Additional possible paths
             possible_paths = [
-                os.path.join(sys.prefix, 'Scripts', 'tonietoolbox.exe'),
                 os.path.join(sys.exec_prefix, 'Scripts', 'tonietoolbox.exe'),
                 os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Programs', 'Python', 'Python*', 'Scripts', 'tonietoolbox.exe'),
                 os.path.join('C:', 'Program Files', 'Python*', 'Scripts', 'tonietoolbox.exe'),
@@ -108,7 +114,7 @@ class BaseIntegration(ABC):
             ]
             commands = ['where', 'tonietoolbox']
             alt_commands = ['where', 'tonietoolbox.exe']
-            fallback = os.path.join(sys.prefix, 'Scripts', 'tonietoolbox.exe')
+            fallback = primary_path  # Use primary path as fallback even if it doesn't exist
         elif sys.platform == 'darwin':
             possible_paths = [os.path.join(sys.prefix, 'bin', 'tonietoolbox')]
             commands = ['which', 'tonietoolbox']
@@ -142,7 +148,9 @@ class BaseIntegration(ABC):
             result = subprocess.run(commands, capture_output=True, text=True, 
                                   shell=sys.platform.startswith('win'))
             if result.returncode == 0:
-                return result.stdout.strip().split('\n')[0]
+                found_path = result.stdout.strip().split('\n')[0]
+                self.logger.debug(f"Found tonietoolbox via {commands}: {found_path}")
+                return found_path
         except:
             pass
         
@@ -151,10 +159,13 @@ class BaseIntegration(ABC):
             try:
                 result = subprocess.run(alt_commands, capture_output=True, text=True, shell=True)
                 if result.returncode == 0:
-                    return result.stdout.strip().split('\n')[0]
+                    found_path = result.stdout.strip().split('\n')[0]
+                    self.logger.debug(f"Found tonietoolbox via {alt_commands}: {found_path}")
+                    return found_path
             except:
                 pass
         
+        self.logger.warning(f"tonietoolbox.exe not found, using fallback: {fallback}")
         return fallback
     
     def _load_or_create_config(self) -> Dict[str, Any]:
@@ -293,8 +304,15 @@ class CommandBuilder:
         if options.get('is_recursive', False):
             cmd.append('--recursive')
         
-        # Always use output to source for integrations
-        cmd.append('--output-to-source')
+        # Only add output-to-source for conversion operations, not for play/info/split
+        is_conversion_operation = not any([
+            options.get('use_info', False),
+            options.get('use_play', False),
+            options.get('is_split', False)
+        ])
+        
+        if is_conversion_operation:
+            cmd.append('--output-to-source')
         
         # Add operation-specific flags
         if options.get('use_info', False):

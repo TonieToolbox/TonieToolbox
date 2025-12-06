@@ -7,7 +7,7 @@ import tempfile
 from typing import Optional, List, TYPE_CHECKING
 from ...base import BaseIntegration
 from ....config.application_constants import ICON_ICO_BASE64
-from ....media import base64_to_ico
+from ....utils.icons import base64_to_ico
 from ....utils import get_logger
 
 if TYPE_CHECKING:
@@ -140,15 +140,35 @@ class WindowsBaseIntegration(BaseIntegration):
             # Extract icon if needed
             self._extract_icon_if_needed()
             
-            # Build command for TAF file playback
-            command_line = ' '.join(command_builder.build_base_command(use_play=True))
+            # Build command for TAF file playback with GUI
+            # Add --gui flag to show the player interface when double-clicking
+            command_parts = command_builder.build_base_command(use_play=True)
+            command_parts.append('--gui')  # Open GUI for visual playback
+            command_line = ' '.join(command_parts)
             
             # Registry keys for TAF file association
             taf_file_type = 'TonieToolbox.TAF'
             
-            # Escape paths for registry file format
-            command_line_escaped = self._reg_escape(f'"{command_line}" "%1"')
-            icon_path_escaped = self._reg_escape(f'"{self.icon_path}",0')
+            # For .reg files, escape backslashes for paths (following legacy pattern)
+            # Pre-escape the exe path by doubling backslashes
+            exe_path_reg = self.exe_path.replace('\\', '\\\\')
+            icon_path_reg = self.icon_path.replace('\\', '\\\\')
+            
+            # Rebuild command with pre-escaped exe path, then ONLY escape quotes
+            # This matches the legacy integration behavior
+            command_parts_reg = command_builder.build_base_command(use_play=True)
+            command_parts_reg[0] = f'"{exe_path_reg}"'  # Replace exe path with escaped version
+            command_parts_reg.append('--gui')
+            command_line_reg = ' '.join(command_parts_reg)
+            
+            # Only escape quotes for registry format (legacy behavior)
+            command_line_reg = command_line_reg.replace('"', '\\"')
+            
+            # Log for debugging
+            self.logger.debug(f"Command before escaping: {command_line}")
+            self.logger.debug(f"Exe path for registry: {exe_path_reg}")
+            self.logger.debug(f"Command for registry: {command_line_reg} \"%1\"")
+            self.logger.debug(f"Expected registry value: \"{command_line_reg} \\\"%1\\\"\"")
             
             # Create registry file content for file association
             reg_content = [
@@ -162,7 +182,7 @@ class WindowsBaseIntegration(BaseIntegration):
                 '@="Tonie Audio File"',
                 '',
                 f'[HKEY_CLASSES_ROOT\\{taf_file_type}\\DefaultIcon]',
-                f'@="{icon_path_escaped}"',
+                f'@="{icon_path_reg},0"',
                 '',
                 f'[HKEY_CLASSES_ROOT\\{taf_file_type}\\shell]',
                 '@="play"',
@@ -171,42 +191,63 @@ class WindowsBaseIntegration(BaseIntegration):
                 '@="Play"',
                 '',
                 f'[HKEY_CLASSES_ROOT\\{taf_file_type}\\shell\\play\\command]',
-                f'@="{command_line_escaped}"',
+                f'@="{command_line_reg} \\"%1\\""',
                 '',
                 f'[HKEY_CLASSES_ROOT\\{taf_file_type}\\shell\\open]',
                 '@="Play with TonieToolbox"',
                 '',
                 f'[HKEY_CLASSES_ROOT\\{taf_file_type}\\shell\\open\\command]',
-                f'@="{command_line_escaped}"',
+                f'@="{command_line_reg} \\"%1\\""',
                 ''
             ]
+            
+            # Log the registry content for debugging
+            self.logger.debug("Registry file content:")
+            for line in reg_content:
+                if line.strip():  # Skip empty lines
+                    self.logger.debug(f"  {line}")
             
             # Write registry file and import with UAC elevation
             success = self._import_registry_file_with_uac(reg_content)
             
             if success:
-                self.logger.debug("Installed TAF file association")
+                self.logger.info("Installed TAF file association successfully")
+                # Notify Windows Shell to refresh file associations and icons
+                self._refresh_shell_associations()
             
             return success
             
         except Exception as e:
-            self.logger.error("Failed to install TAF file association: %s", e)
+            self.logger.error(f"Failed to install TAF file association: {e}", exc_info=True)
             return False
-            
-    def _reg_escape(self, value: str) -> str:
-        """Escape a string value for use in registry files."""
-        # Escape backslashes and quotes for registry file format
-        return value.replace('\\', '\\\\').replace('"', '\\"')
     
     def _import_registry_file_with_uac(self, reg_content: list) -> bool:
         """
         Create a temporary registry file and import it with UAC elevation.
+        Also saves a copy to ~/.tonietoolbox/integration for debugging.
         """
         import tempfile
         import subprocess
+        import time
         
         try:
-            # Create temporary registry file
+            # Create integration directory for saved registry files
+            integration_dir = os.path.join(os.path.expanduser('~'), '.tonietoolbox', 'integration')
+            os.makedirs(integration_dir, exist_ok=True)
+            
+            # Generate filename with timestamp for debugging
+            timestamp = time.strftime('%Y%m%d_%H%M%S')
+            saved_reg_path = os.path.join(integration_dir, f'file_association_{timestamp}.reg')
+            
+            # Save a copy for debugging
+            try:
+                with open(saved_reg_path, 'w', encoding='utf-8') as saved_file:
+                    saved_file.write('\n'.join(reg_content))
+                self.logger.info(f"Saved registry file for debugging: {saved_reg_path}")
+            except Exception as e:
+                self.logger.warning(f"Could not save debug registry file: {e}")
+            
+            # Create temporary registry file for import
             with tempfile.NamedTemporaryFile(mode='w', suffix='.reg', 
                                            encoding='utf-8', delete=False) as reg_file:
                 reg_file.write('\n'.join(reg_content))
@@ -248,6 +289,8 @@ class WindowsBaseIntegration(BaseIntegration):
         Remove file association for TAF files from Windows registry.
         Uses UAC elevation to remove from HKEY_CLASSES_ROOT.
         """
+        import time
+        
         try:
             # Create registry file content for removal
             reg_content = [
@@ -259,17 +302,57 @@ class WindowsBaseIntegration(BaseIntegration):
                 ''
             ]
             
+            # Save removal registry file for debugging
+            integration_dir = os.path.join(os.path.expanduser('~'), '.tonietoolbox', 'integration')
+            os.makedirs(integration_dir, exist_ok=True)
+            timestamp = time.strftime('%Y%m%d_%H%M%S')
+            saved_reg_path = os.path.join(integration_dir, f'file_association_remove_{timestamp}.reg')
+            
+            try:
+                with open(saved_reg_path, 'w', encoding='utf-8') as saved_file:
+                    saved_file.write('\n'.join(reg_content))
+                self.logger.info(f"Saved removal registry file for debugging: {saved_reg_path}")
+            except Exception as e:
+                self.logger.warning(f"Could not save debug removal registry file: {e}")
+            
             # Import removal registry file with UAC elevation
             success = self._import_registry_file_with_uac(reg_content)
             
             if success:
                 self.logger.debug("Removed TAF file association")
+                # Notify Windows Shell to refresh file associations and icons
+                self._refresh_shell_associations()
             
             return success
             
         except Exception as e:
             self.logger.error("Failed to remove TAF file association: %s", e)
             return False
+    
+    def _refresh_shell_associations(self) -> None:
+        """
+        Notify Windows Shell to refresh file associations and icon cache.
+        This ensures that changes to file associations are immediately visible in Explorer.
+        """
+        try:
+            # Try using ctypes to call SHChangeNotify
+            import ctypes
+            from ctypes import wintypes
+            
+            # Constants for SHChangeNotify
+            SHCNE_ASSOCCHANGED = 0x08000000
+            SHCNF_IDLIST = 0x0000
+            
+            # Load shell32.dll
+            shell32 = ctypes.windll.shell32
+            
+            # Call SHChangeNotify to refresh file associations
+            shell32.SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, None, None)
+            
+            self.logger.debug("Notified Windows Shell to refresh file associations")
+            
+        except Exception as e:
+            self.logger.debug("Could not refresh Shell associations (non-critical): %s", e)
     
     def _extract_icon_if_needed(self):
         """Extract ICO icon for Windows."""
