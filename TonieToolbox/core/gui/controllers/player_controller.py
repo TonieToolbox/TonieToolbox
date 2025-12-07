@@ -303,8 +303,15 @@ class QtPlayerController(QObject):
             logger.warning("No TAF player available for seeking")
     
     def load_file(self, file_path, callback=None):
-        """Load a TAF file."""
+        """Load a TAF file and add it to the playlist.
+        
+        This method delegates to add_files_to_playlist() which properly initializes
+        the playlist manager, adds the file, and updates the UI. This ensures that
+        single file loads (like --gui --play) also create a proper playlist.
+        """
         try:
+            logger.info(f"load_file called for: {file_path}")
+            
             # Stop any existing playback before loading new file
             if self.taf_player:
                 self.taf_player.stop()
@@ -312,15 +319,17 @@ class QtPlayerController(QObject):
             
             self.model.state = PlayerState.LOADING
             
-            self.taf_player = TAFPlayer()
-            self.taf_player.load(str(file_path))
+            # Delegate to add_files_to_playlist which handles everything:
+            # - Playlist manager initialization
+            # - Adding file to playlist
+            # - Loading file into player engine
+            # - Updating model state
+            # - Updating UI components
+            file_path_obj = Path(file_path)
+            success = self.add_files_to_playlist([str(file_path_obj)])
             
-            # Get TAF analysis using domain objects
-            from ...analysis import analyze_taf_file
-            analysis_result = analyze_taf_file(Path(file_path))
-            
-            self.model.load_file(file_path, analysis_result)
-            self.model.state = PlayerState.STOPPED
+            if not success:
+                raise Exception("Failed to add file to playlist")
             
             logger.info(f"File loaded: {file_path}")
             
@@ -820,7 +829,7 @@ class QtPlayerController(QObject):
     
     def add_files_to_playlist(self, file_paths: list):
         """Add files to the current playlist."""
-        logger.debug(f"add_files_to_playlist called with {len(file_paths)} files")
+        logger.info(f"add_files_to_playlist called with {len(file_paths)} files")
         
         # If no player exists, create a playlist from the files
         if not self.taf_player:
@@ -952,6 +961,11 @@ class QtPlayerController(QObject):
             first_item = self.taf_player.playlist_manager.jump_to_item(0)
             if first_item:
                 logger.debug(f"Loading first track: {first_item.file_path}")
+                
+                # Load file into the TAF player engine (required for playback)
+                self.taf_player.load(str(first_item.file_path))
+                
+                # Get analysis and update model
                 from ...analysis import analyze_taf_file
                 analysis_result = analyze_taf_file(first_item.file_path)
                 self.model.load_file(first_item.file_path, analysis_result)

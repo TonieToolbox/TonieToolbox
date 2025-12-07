@@ -83,7 +83,7 @@ class MainWindow(QMainWindow):
     closing = pyqtSignal()
     
     def __init__(self, theme_manager=None, translation_manager=None, 
-                 thread_manager=None, plugin_manager=None):
+                 thread_manager=None, plugin_manager=None, has_pending_file=False):
         """
         Initialize the main window.
         
@@ -92,6 +92,7 @@ class MainWindow(QMainWindow):
             translation_manager: Translation management system
             thread_manager: Thread management system
             plugin_manager: Plugin management system
+            has_pending_file: True if a file will be loaded via command line (--play flag)
         """
         super().__init__()
         
@@ -104,6 +105,7 @@ class MainWindow(QMainWindow):
         self.thread_manager = thread_manager
         self.plugin_manager = plugin_manager
         self._event_bus = get_event_bus()
+        self.has_pending_file = has_pending_file  # Flag to prevent auto-load conflicts
         
         # Subscribe to language change events
         self._event_bus.subscribe(LanguageChangedEvent, self._on_language_changed)
@@ -786,6 +788,11 @@ class MainWindow(QMainWindow):
     def _auto_load_last_playlist(self):
         """Auto-load last playlist if enabled in config."""
         try:
+            # Skip auto-load if a file will be loaded via command line (--play flag)
+            if self.has_pending_file:
+                logger.info("Skipping auto-load: File will be loaded via command line (--play flag)")
+                return
+            
             from TonieToolbox.core.config import get_config_manager
             config = get_config_manager()
             

@@ -40,11 +40,12 @@ class TonieToolboxQtApplication:
     Manages application lifecycle, window management, and component coordination.
     """
     
-    def __init__(self, plugin_manager=None):
+    def __init__(self, plugin_manager=None, has_pending_file=False):
         """Initialize the Qt application.
         
         Args:
             plugin_manager: Optional PluginManager instance for plugin support
+            has_pending_file: True if a file will be loaded via command line (--play flag)
         """
         if not PYQT6_AVAILABLE:
             raise RuntimeError("PyQt6 is not available")
@@ -70,6 +71,7 @@ class TonieToolboxQtApplication:
         # State
         self._ready_callbacks = []
         self._initialized = False
+        self.has_pending_file = has_pending_file  # Flag to prevent auto-load conflicts
         
         # Setup signal handlers
         self._setup_signal_handlers()
@@ -147,7 +149,8 @@ class TonieToolboxQtApplication:
                 theme_manager=self.theme_manager,
                 translation_manager=self.translation_manager,
                 thread_manager=self.thread_manager,
-                plugin_manager=self.plugin_manager
+                plugin_manager=self.plugin_manager,
+                has_pending_file=self.has_pending_file
             )
             
             # Apply initial theme

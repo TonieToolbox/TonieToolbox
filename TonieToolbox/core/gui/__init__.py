@@ -57,7 +57,11 @@ if PYQT6_AVAILABLE:
             logger.info("Starting PyQt6 GUI application")
         
         try:
-            app = TonieToolboxQtApplication(plugin_manager=plugin_manager)
+            # Pass flag to application if file will be loaded from command line
+            app = TonieToolboxQtApplication(
+                plugin_manager=plugin_manager,
+                has_pending_file=bool(taf_file_path)
+            )
             
             if taf_file_path:
                 # Determine if this is single file or playlist mode
