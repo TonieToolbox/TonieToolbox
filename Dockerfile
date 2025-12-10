@@ -31,13 +31,13 @@ ARG TARGETARCH
 ARG VERSION
 
 LABEL org.opencontainers.image.title="TonieToolbox" \
-      org.opencontainers.image.description="Convert audio files to Tonie box compatible format" \
+      org.opencontainers.image.description="Converting various audio formats into tonie audio format (.taf)" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.authors="Quentendo64" \
-      org.opencontainers.image.url="https://github.com/Quentendo64/TonieToolbox" \
-      org.opencontainers.image.source="https://github.com/Quentendo64/TonieToolbox" \
+      org.opencontainers.image.url="https://github.com/TonieToolbox/TonieToolbox" \
+      org.opencontainers.image.source="https://github.com/TonieToolbox/TonieToolbox" \
       org.opencontainers.image.licenses="GPL-3.0-or-later" \
-      org.opencontainers.image.documentation="https://github.com/Quentendo64/TonieToolbox/blob/main/README.md" \
+      org.opencontainers.image.documentation="https://github.com/TonieToolbox/TonieToolbox/blob/main/README.md" \
       maintainer="Quentendo64"
 
 WORKDIR /tonietoolbox

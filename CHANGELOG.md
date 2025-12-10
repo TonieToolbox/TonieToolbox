@@ -3,7 +3,18 @@ All notable changes to TonieToolbox will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [Unreleased]
+### Added
+### Changed
+- Dockerfile labels updated to reflect new GitHub organization TonieToolbox
+- Updated DockerHub image name in GitHub Actions workflow to tonietoolbox/tonietoolbox for consistency with new organization
+### Fixed
+### Removed
+### Deprecated
+
+
+## [1.0.0a2] - 2025-12-07
 
 ### Fixed
 - **Windows File Association (Issue #2)**: Fixed TAF file double-click functionality on Windows
