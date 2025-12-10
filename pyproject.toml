@@ -72,7 +72,7 @@ Issues = "https://github.com/TonieToolbox/TonieToolbox/issues"
 tonietoolbox = "TonieToolbox.__main__:main"
 
 [project.gui-scripts]
-tonietoolbox-gui = "TonieToolbox.__main__:main"
+tonietoolbox-gui = "TonieToolbox.__main__:main_gui"
 
 [tool.setuptools]
 py-modules = []

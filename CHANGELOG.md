@@ -6,9 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- **GUI Entry Point**: Added dedicated `tonietoolbox-gui` entry point that launches directly into GUI mode without requiring `--gui` flag
+  - Automatically suppresses console window on Windows (via `gui-scripts` entry point)
+  - Provides cleaner separation between CLI and GUI launches
+  - Users can now launch GUI via `tonietoolbox-gui` command or desktop shortcuts without console window
 ### Changed
 - Dockerfile labels updated to reflect new GitHub organization TonieToolbox
 - Updated DockerHub image name in GitHub Actions workflow to tonietoolbox/tonietoolbox for consistency with new organization
+- **Entry Points**: Split `main()` (CLI) and `main_gui()` (GUI) entry points in `__main__.py`
 ### Fixed
 ### Removed
 ### Deprecated
