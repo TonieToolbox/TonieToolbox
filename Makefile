@@ -1,7 +1,7 @@
 # TonieToolbox Documentation Makefile
 # Simple commands for local documentation development
 
-.PHONY: docs-setup docs-serve docs-build docs-clean docs-test help clean clean-all test test-unit test-integration test-functional test-coverage test-setup test-deps test-clean test-setup-multi-version test-multi-version test-clean-multi-version release release-patch release-minor release-major pre-release alpha beta rc build install
+.PHONY: docs-setup docs-serve docs-build docs-clean docs-test help clean clean-all test test-unit test-integration test-functional test-coverage test-setup test-deps test-clean test-setup-multi-version test-multi-version test-clean-multi-version build-multi-version release release-patch release-minor release-major pre-release alpha beta rc build install
 
 # Default help target
 help:
@@ -32,6 +32,7 @@ help:
 	@echo "  test-setup-multi-version - Set up test environments for all Python versions"
 	@echo "  test-multi-version       - Run tests with all available Python versions"
 	@echo "  test-clean-multi-version - Clean multi-version test environments"
+	@echo "  build-multi-version      - Build package with all available Python versions"
 	@echo "  EXCLUDE_VERSIONS='3.10 3.11' - Exclude specific Python versions"
 	@echo ""
 	@echo "Release Management:"
@@ -199,11 +200,15 @@ test-clean:
 	@echo "Cleaning test artifacts..."
 	@python3 scripts/tests.py --clean-venv
 
-# Multi-version Python testing
-# Discovers all installed Python 3.x versions and creates separate test environments
-PYTHON_VERSIONS := $(shell for v in 3.10 3.11 3.12 3.13 3.14 3.15; do \
-	python$$v --version >/dev/null 2>&1 && echo $$v; \
-done)
+# Multi-version Python testing using pyenv
+# Discovers all installed Python 3.x versions via pyenv and creates separate test environments
+PYTHON_VERSIONS := $(shell if command -v pyenv >/dev/null 2>&1; then \
+	pyenv versions --bare | grep -E '^3\.(10|11|12|13|14|15)' | sort -V; \
+else \
+	for v in 3.10 3.11 3.12 3.13 3.14 3.15; do \
+		python$$v --version >/dev/null 2>&1 && echo $$v; \
+	done; \
+fi)
 
 # Allow exclusions via EXCLUDE_VERSIONS variable
 # Usage: make test-setup-multi-version EXCLUDE_VERSIONS="3.10 3.11"
@@ -309,6 +314,105 @@ test-clean-multi-version:
 	done
 	@echo "✓ Multi-version test environments cleaned!"
 
+build-multi-version:
+	@echo "Building package with multiple Python versions..."
+	@if command -v pyenv >/dev/null 2>&1; then \
+		echo "Using pyenv for Python version management"; \
+	else \
+		echo "Using system Python versions"; \
+	fi
+	@echo "Available Python versions: $(PYTHON_VERSIONS)"
+	@if [ -n "$(EXCLUDE_VERSIONS)" ]; then \
+		echo "Excluding versions: $(EXCLUDE_VERSIONS)"; \
+	fi
+	@echo "Building with: $(FILTERED_VERSIONS)"
+	@echo ""
+	@if [ -z "$(FILTERED_VERSIONS)" ]; then \
+		echo "✗ No Python versions available for building"; \
+		if command -v pyenv >/dev/null 2>&1; then \
+			echo "  Install Python versions with: pyenv install <version>"; \
+			echo "  Example: pyenv install 3.12.0"; \
+		else \
+			echo "  Install Python 3.10+ or check EXCLUDE_VERSIONS"; \
+		fi; \
+		exit 1; \
+	fi
+	@mkdir -p dist-multi-version
+	@failed_versions=""; \
+	passed_versions=""; \
+	for version in $(FILTERED_VERSIONS); do \
+		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+		echo "Building with Python $$version..."; \
+		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+		venv_path="venv/build-py$$version"; \
+		echo "Creating build environment: $$venv_path"; \
+		if command -v pyenv >/dev/null 2>&1; then \
+			pyenv local $$version 2>/dev/null || { \
+				echo "✗ Python $$version not installed in pyenv"; \
+				echo "  Install with: pyenv install $$version"; \
+				failed_versions="$$failed_versions $$version"; \
+				echo ""; \
+				continue; \
+			}; \
+			python -m venv $$venv_path || { \
+				echo "✗ Failed to create venv for Python $$version"; \
+				failed_versions="$$failed_versions $$version"; \
+				echo ""; \
+				continue; \
+			}; \
+		else \
+			python$$version -m venv $$venv_path || { \
+				echo "✗ Failed to create venv for Python $$version"; \
+				failed_versions="$$failed_versions $$version"; \
+				echo ""; \
+				continue; \
+			}; \
+		fi; \
+		echo "Installing build dependencies..."; \
+		$$venv_path/bin/pip install --upgrade pip --quiet || { \
+			echo "✗ Failed to upgrade pip for Python $$version"; \
+			rm -rf $$venv_path; \
+			failed_versions="$$failed_versions $$version"; \
+			echo ""; \
+			continue; \
+		}; \
+		$$venv_path/bin/pip install build --quiet || { \
+			echo "✗ Failed to install build package for Python $$version"; \
+			rm -rf $$venv_path; \
+			failed_versions="$$failed_versions $$version"; \
+			echo ""; \
+			continue; \
+		}; \
+		echo "Building package..."; \
+		if $$venv_path/bin/python -m build --outdir dist-multi-version/py$$version 2>&1 | grep -v "Successfully built"; then \
+			echo "✓ Python $$version: BUILD SUCCESSFUL"; \
+			passed_versions="$$passed_versions $$version"; \
+		else \
+			echo "✗ Python $$version: BUILD FAILED"; \
+			failed_versions="$$failed_versions $$version"; \
+		fi; \
+		echo "Cleaning up build environment..."; \
+		rm -rf $$venv_path; \
+		echo ""; \
+	done; \
+	if command -v pyenv >/dev/null 2>&1; then \
+		pyenv local --unset 2>/dev/null || true; \
+	fi; \
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	echo "Multi-version build results:"; \
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	if [ -n "$$passed_versions" ]; then \
+		echo "✓ Passed:$$passed_versions"; \
+		echo "  Artifacts: dist-multi-version/"; \
+	fi; \
+	if [ -n "$$failed_versions" ]; then \
+		echo "✗ Failed:$$failed_versions"; \
+		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+		exit 1; \
+	fi; \
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	echo "✓ All versions built successfully!"
+
 # Quick test workflow for development
 test-dev: test-setup test
 
@@ -316,6 +420,7 @@ test-dev: test-setup test
 clean-all: clean docs-clean-all test-clean
 	@echo "Cleaning build and install virtual environments..."
 	@rm -rf ./venv/ 2>/dev/null || true
+	@rm -rf ./dist-multi-version/ 2>/dev/null || true
 	@echo "✓ Full project cleanup complete!"
 
 # Release Management

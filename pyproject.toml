@@ -6,8 +6,8 @@ name = "TonieToolbox"
 dynamic = ["version"]
 description = "Convert audio files to Toniebox compatible format (.TAF) and interact with TeddyCloud."
 readme = "README.md"
-requires-python = ">=3.12"
-license = "GPL-3.0-or-later"
+requires-python = ">=3.10"
+license = {text = "GPL-3.0-or-later"}
 authors = [
     {name = "Quentendo64", email = "quentin@wohlfeil.at"}
 ]
@@ -49,6 +49,7 @@ docs = [
 [project.urls]
 Homepage = "https://github.com/TonieToolbox/TonieToolbox"
 "Bug Tracker" = "https://github.com/TonieToolbox/TonieToolbox/issues"
+
 [project.scripts]
 tonietoolbox = "TonieToolbox.__main__:main"
 
