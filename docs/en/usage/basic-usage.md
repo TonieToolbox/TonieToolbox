@@ -60,6 +60,39 @@ Then convert:
 tonietoolbox playlist.lst my-album.taf
 ```
 
+Files are combined in the order they appear in the list. Relative paths are
+resolved relative to the list file, and lines starting with `#` are ignored.
+
+#### YouTube URLs in Playlist Files
+
+Playlist files may also contain YouTube URLs. The audio of each referenced
+video is downloaded with [yt-dlp](https://github.com/yt-dlp/yt-dlp) and
+converted like a local file. URLs to whole YouTube playlists
+(`https://www.youtube.com/playlist?list=...`) as well as video URLs with a
+`list` parameter (`https://www.youtube.com/watch?v=...&list=PL...`) add all
+videos of that playlist, in playlist order. Unavailable or private playlist
+entries are skipped. Auto-generated YouTube Mixes (`list=RD...`) are not
+expanded; only the referenced video is downloaded.
+
+```text
+# Contents of playlist.lst
+/path/to/intro.mp3
+https://www.youtube.com/watch?v=VIDEO_ID
+https://youtu.be/OTHER_VIDEO_ID
+https://www.youtube.com/playlist?list=PLAYLIST_ID
+```
+
+This requires yt-dlp, either as `yt-dlp` executable in your PATH or as Python
+package (`pip install "TonieToolbox[youtube]"`). yt-dlp also needs a JavaScript
+runtime for most YouTube videos: deno is used by default; if it is not
+installed, TonieToolbox tells yt-dlp to use node, bun or QuickJS instead. If
+downloads fail with "This video is not available", update yt-dlp (YouTube
+changes frequently break older versions). Downloads are stored in a
+temporary directory that is removed after conversion; use `--keep-temp` to
+keep the downloaded files. If a download fails, the conversion is aborted.
+
+Only download content you have the right to use.
+
 ## Recursive Processing
 
 Process entire directory structures with two modes:

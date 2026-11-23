@@ -5,6 +5,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **YouTube URLs in Playlist Files**: `.lst` files can now contain YouTube video and playlist URLs. The audio is downloaded with yt-dlp (executable in PATH or optional `youtube` extra) and converted together with local files. Downloads are cleaned up afterwards unless `--keep-temp` is given.
+
 ### Fixed
 - **Windows File Association (Issue #2)**: Fixed TAF file double-click functionality on Windows
   - Fixed registry file escaping to use legacy pattern (only escape quotes, not backslashes)
@@ -23,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Package Build**: Fixed circular import error during `pip install -e .` by excluding standalone `tonietoolbox.py` from package discovery using `py-modules = []` in pyproject.toml.
 - **Documentation Links**: Fixed broken links in README.md and docs/en/index.md pointing to wrong base URL.
 - **DockerHub Image Name**: Updated DockerHub image name in GitHub Actions workflow to `tonietoolbox/tonietoolbox` for consistency with new organization.
+- **Playlist Files (.lst)**: Converting a `.lst` file failed with "Unsupported file types". List files are now routed to the files-to-TAF processing, and the order of the entries in the list is preserved.
 
 ### Changed
 - **Dependency Download Behavior**: `--auto-download` now intelligently reuses existing dependencies. Use `--auto-download --force-creation` together to force re-download.
