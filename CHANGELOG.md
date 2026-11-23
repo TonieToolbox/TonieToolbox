@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **TAF Creation (OGG Page Padding)**: Fixed conversion failing with "Page size after padding (...) doesn't match target size (...)" for some audio files. When a page had too many segments to pad its last packet, an earlier packet was padded instead, and the new segment was inserted one position too late, overwriting the following packet.
 - **Windows File Association (Issue #2)**: Fixed TAF file double-click functionality on Windows
   - Fixed registry file escaping to use legacy pattern (only escape quotes, not backslashes)
   - Fixed `InputProcessor.normalize_input_path()` stripping backslashes on Windows

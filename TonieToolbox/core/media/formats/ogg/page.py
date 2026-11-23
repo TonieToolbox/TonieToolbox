@@ -323,7 +323,10 @@ class OggPage:
         if segments_to_create > 0:
             logger.trace("Need to create %d new segments", segments_to_create)
             for i in range(0, segments_to_create):
-                self.insert_empty_segment(seg_start + seg_count + i, i != (segments_to_create - 1))
+                # Insert directly after the packet's current last segment. Inserting any
+                # later would make the redistribution below overwrite the next packet
+                # (only noticeable when the padded packet is not the last one on the page).
+                self.insert_empty_segment(seg_start + seg_count - 1 + i, i != (segments_to_create - 1))
             seg_count = needed_seg_count
         
         for i in range(0, seg_count):
