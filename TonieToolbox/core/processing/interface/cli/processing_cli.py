@@ -61,15 +61,18 @@ class CLIProcessingCoordinator:
     """
     
     def __init__(self, processing_service: ProcessingApplicationService,
-                 logger: Optional[logging.Logger] = None):
+                 logger: Optional[logging.Logger] = None,
+                 ffmpeg_path: Optional[str] = None):
         """
         Initialize CLI processing coordinator.
         
         Args:
             processing_service: Application service for processing operations
             logger: Optional logger instance
+            ffmpeg_path: Resolved path to ffmpeg (used e.g. by yt-dlp downloads)
         """
         self.processing_service = processing_service
+        self.ffmpeg_path = ffmpeg_path
         from ....utils.logging import get_logger
         self.logger = logger or get_logger(__name__)
         
@@ -158,6 +161,14 @@ class CLIProcessingCoordinator:
         
         if hasattr(args, 'preserve_metadata'):
             request['preserve_metadata'] = args.preserve_metadata
+        
+        # External tools / temporary files
+        ffmpeg_path = getattr(args, 'ffmpeg', None) or self.ffmpeg_path
+        if ffmpeg_path:
+            request['ffmpeg_path'] = ffmpeg_path
+        
+        if hasattr(args, 'keep_temp'):
+            request['keep_temp'] = args.keep_temp
         
         # Mode-specific options
         if hasattr(args, 'recursive'):
@@ -296,9 +307,11 @@ class CLIProcessingCoordinator:
                 del request['input_path']
             return self._adapters['recursive']
         
-        # Files to TAF (multiple files to single output)
+        # Files to TAF (multiple files to single output, including .lst list files)
         if ('input_pattern' in request or 
-            ('input_path' in request and ('*' in request['input_path'] or Path(request['input_path']).is_dir()))):
+            ('input_path' in request and ('*' in request['input_path'] or
+                                          Path(request['input_path']).is_dir() or
+                                          Path(request['input_path']).suffix.lower() == '.lst'))):
             # Convert input_path to input_pattern if needed for adapter compatibility
             if 'input_path' in request and 'input_pattern' not in request:
                 request['input_pattern'] = request['input_path']
@@ -460,7 +473,8 @@ class CLIArgumentValidator:
 
 
 def create_cli_coordinator(processing_service: ProcessingApplicationService,
-                          logger: Optional[logging.Logger] = None) -> CLIProcessingCoordinator:
+                          logger: Optional[logging.Logger] = None,
+                          ffmpeg_path: Optional[str] = None) -> CLIProcessingCoordinator:
     """
     Factory function to create CLI processing coordinator.
     
@@ -471,4 +485,4 @@ def create_cli_coordinator(processing_service: ProcessingApplicationService,
     Returns:
         Configured CLI processing coordinator
     """
-    return CLIProcessingCoordinator(processing_service, logger)
+    return CLIProcessingCoordinator(processing_service, logger, ffmpeg_path)

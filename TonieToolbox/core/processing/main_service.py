@@ -154,7 +154,8 @@ class MainProcessingService:
             
             # CLI coordinator
             self.cli_coordinator = CLIProcessingCoordinator(
-                self.processing_service, logger
+                self.processing_service, logger,
+                ffmpeg_path=self.dependencies.get('ffmpeg')
             )
             
             logger.debug("Interface layer initialized")

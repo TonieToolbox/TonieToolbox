@@ -10,12 +10,15 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 import logging
 import glob
+import shutil
+import tempfile
 
 from .base_adapter import BaseInterfaceAdapter, ProgressTrackingMixin
 from ...application.services.processing_application_service import ProcessingApplicationService
 from ...domain import InputSpecification, OutputSpecification
 from ...domain.models.processing_result import ProcessingStatus
 from ...domain.services import OutputPathResolver
+from ....media.download import YouTubeDownloader, YouTubeDownloadError, is_youtube_url
 
 
 class FilesToTafAdapter(BaseInterfaceAdapter, ProgressTrackingMixin):
@@ -34,6 +37,9 @@ class FilesToTafAdapter(BaseInterfaceAdapter, ProgressTrackingMixin):
         
         # Initialize domain service for output path resolution
         self.path_resolver = OutputPathResolver(logger)
+        
+        # Temporary directories holding downloaded (e.g. YouTube) audio files
+        self._download_dirs: List[Path] = []
     
     def _validate_request(self, request: Dict[str, Any]) -> bool:
         """
@@ -127,6 +133,13 @@ class FilesToTafAdapter(BaseInterfaceAdapter, ProgressTrackingMixin):
             Exit code (0 for success, non-zero for failure)
         """
         try:
+            return self._execute(request)
+        finally:
+            self._cleanup_downloads(keep=request.get('keep_temp', False))
+    
+    def _execute(self, request: Dict[str, Any]) -> int:
+        """Execute files to TAF processing request (see execute())."""
+        try:
             self.logger.info(f"Starting files to TAF processing: {request.get('input_pattern')}")
             
             # Validate request
@@ -136,7 +149,12 @@ class FilesToTafAdapter(BaseInterfaceAdapter, ProgressTrackingMixin):
             self._update_progress("Discovering", 0.0, "Finding input files")
             
             # Discover input files
-            input_files = self._discover_input_files(request)
+            try:
+                input_files = self._discover_input_files(request)
+            except YouTubeDownloadError as e:
+                self.logger.error(str(e))
+                self._update_progress("Failed", 1.0, f"Download failed: {str(e)}")
+                return 1
             
             if not input_files:
                 self.logger.error(f"No input files found for pattern: {request.get('input_pattern')}")
@@ -155,11 +173,10 @@ class FilesToTafAdapter(BaseInterfaceAdapter, ProgressTrackingMixin):
                     recursive=request.get('recursive', False)
                 )
             else:
-                # Multiple files - use the directory as input and set options for combining
-                input_dir = str(input_files[0].parent)
-                input_spec = InputSpecification.from_path(
-                    input_dir,
-                    recursive=request.get('recursive', True)
+                # Multiple files - pass the discovered files explicitly (keeps their order)
+                input_spec = InputSpecification.for_file_list(
+                    input_files,
+                    source_path=str(request['input_pattern'])
                 )
             
             output_spec = self._create_output_specification(request)
@@ -215,9 +232,9 @@ class FilesToTafAdapter(BaseInterfaceAdapter, ProgressTrackingMixin):
         
         # Handle different input types
         if input_path.exists() and input_path.is_file():
-            if input_path.suffix.lower() == '.lst':
+            if self._is_list_file(input_path):
                 # List file
-                files = self._read_list_file(input_path)
+                files = self._read_list_file(input_path, request)
             else:
                 # Single file
                 files = [input_path]
@@ -238,38 +255,88 @@ class FilesToTafAdapter(BaseInterfaceAdapter, ProgressTrackingMixin):
         if request.get('exclude_patterns'):
             files = self._exclude_patterns(files, request['exclude_patterns'])
         
-        # Sort files if requested
-        sort_method = request.get('sort_files', 'name')
+        # Sort files if requested (list files keep the order given in the list)
+        sort_method = request.get('sort_files', 'none' if self._is_list_file(input_path) else 'name')
         if sort_method != 'none':
             files = self._sort_files(files, sort_method)
         
         return files
     
-    def _read_list_file(self, list_file_path: Path) -> List[Path]:
-        """Read file paths from a .lst file."""
+    @staticmethod
+    def _is_list_file(path: Path) -> bool:
+        """Check whether the given path is a list file (.lst)."""
+        return path.suffix.lower() == '.lst'
+    
+    def _read_list_file(self, list_file_path: Path, request: Optional[Dict[str, Any]] = None) -> List[Path]:
+        """
+        Read file paths from a .lst file.
+        
+        Each non-empty line that does not start with '#' is either a path to an
+        audio file (absolute or relative to the list file), a directory (all audio
+        files in it are added), or a YouTube URL. YouTube URLs are downloaded with
+        yt-dlp into a temporary directory.
+        
+        Raises:
+            YouTubeDownloadError: If a YouTube URL could not be downloaded
+        """
+        request = request or {}
         try:
-            files = []
-            base_dir = list_file_path.parent
-            
             with open(list_file_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#'):
-                        # Convert relative paths to absolute
-                        file_path = Path(line)
-                        if not file_path.is_absolute():
-                            file_path = base_dir / file_path
-                        
-                        if file_path.exists():
-                            files.append(file_path)
-                        else:
-                            self.logger.warning(f"File not found in list: {file_path}")
-            
-            return files
-            
+                lines = f.readlines()
         except Exception as e:
             self.logger.error(f"Failed to read list file {list_file_path}: {str(e)}")
             return []
+        
+        files = []
+        base_dir = list_file_path.parent
+        downloader = None
+        
+        for line_num, line in enumerate(lines, 1):
+            entry = line.strip()
+            if not entry or entry.startswith('#'):
+                continue
+            entry = entry.strip('"\'')
+            
+            if is_youtube_url(entry):
+                if downloader is None:
+                    downloader = YouTubeDownloader(ffmpeg_path=request.get('ffmpeg_path'))
+                target_dir = self._create_download_dir() / f"{line_num:04d}"
+                self._update_progress("Downloading", 0.05, f"Downloading {entry}")
+                files.extend(downloader.download(entry, target_dir))
+                continue
+            
+            # Convert relative paths to absolute
+            file_path = Path(entry)
+            if not file_path.is_absolute():
+                file_path = base_dir / file_path
+            
+            if file_path.is_dir():
+                dir_files = self._discover_files_in_directory(file_path, {'recursive': False})
+                if dir_files:
+                    files.extend(sorted(dir_files))
+                else:
+                    self.logger.warning(f"No audio files found in directory from list: {file_path}")
+            elif file_path.exists():
+                files.append(file_path)
+            else:
+                self.logger.warning(f"File not found in list: {file_path}")
+        
+        return files
+    
+    def _create_download_dir(self) -> Path:
+        """Get the temporary directory used for downloads of this run."""
+        if not self._download_dirs:
+            self._download_dirs.append(Path(tempfile.mkdtemp(prefix='tonietoolbox_download_')))
+        return self._download_dirs[-1]
+    
+    def _cleanup_downloads(self, keep: bool = False) -> None:
+        """Remove temporary download directories (unless they should be kept)."""
+        for download_dir in self._download_dirs:
+            if keep:
+                self.logger.info(f"Keeping downloaded files in: {download_dir}")
+            else:
+                shutil.rmtree(download_dir, ignore_errors=True)
+        self._download_dirs = []
     
     def _discover_files_in_directory(self, directory: Path, request: Dict[str, Any]) -> List[Path]:
         """Discover files in directory."""

@@ -9,7 +9,7 @@ what inputs are expected for a processing operation.
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
-from typing import List, Optional, Set, Union
+from typing import List, Optional, Sequence, Set, Tuple, Union
 import os
 import glob
 
@@ -45,6 +45,7 @@ class InputSpecification:
     required_extensions: Optional[Set[str]] = None
     min_files: int = 1
     max_files: Optional[int] = None
+    file_list: Optional[Tuple[str, ...]] = None
     
     def __post_init__(self):
         """Validate input specification."""
@@ -106,6 +107,31 @@ class InputSpecification:
         )
     
     @classmethod
+    def for_file_list(cls, files: Sequence[Union[str, Path]], source_path: Optional[str] = None,
+                      content_type: ContentType = ContentType.AUDIO) -> 'InputSpecification':
+        """
+        Create specification for an explicit, ordered list of files.
+        
+        Args:
+            files: Files to process, in the order they should be processed
+            source_path: Path describing the origin of the list (e.g. the .lst file).
+                Defaults to the directory of the first file.
+            content_type: Expected content type
+        """
+        file_tuple = tuple(str(f) for f in files)
+        if not file_tuple:
+            raise ValidationError("file_list", "Must contain at least one file", file_tuple)
+        
+        return cls(
+            input_path=source_path or str(Path(file_tuple[0]).parent),
+            input_type=InputType.FILE_LIST,
+            content_type=content_type,
+            recursive=False,
+            min_files=1,
+            file_list=file_tuple
+        )
+    
+    @classmethod
     def for_recursive_directory(cls, directory: str, content_type: ContentType = ContentType.AUDIO) -> 'InputSpecification':
         """Create specification for recursive directory processing."""
         return cls(
@@ -130,6 +156,13 @@ class InputSpecification:
         
         elif self.input_type == InputType.PATTERN:
             files.extend(Path(p) for p in glob.glob(self.input_path, recursive=self.recursive))
+        
+        elif self.input_type == InputType.FILE_LIST:
+            # Explicit file list: keep the given order (e.g. order of a .lst file)
+            files = [Path(f) for f in (self.file_list or ()) if os.path.isfile(f)]
+            if self.required_extensions:
+                files = [f for f in files if f.suffix.lower() in self.required_extensions]
+            return files
         
         # Filter by extensions if specified
         if self.required_extensions:
